@@ -43,6 +43,10 @@ def login():
 def register():
     return render_template('register.html')
 
+
+
+
+
 # Authenticates the login
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
