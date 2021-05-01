@@ -1,3 +1,17 @@
+### REQUIREMENTS ### (delete when complete)
+# 1. public info
+# 2. three types of registrations
+# 3. three types of user login
+# 4. password hashed before saving to db
+# 5. home page should deal with error message and link to other interfaces
+# 6. general use cases: ViewMyFlights, SearchFlights, Logout
+# 7. Customer: PurchaseTickets, TrackMySpending
+# 8. BookingAgent: PurchaseTickets, ViewMyCommission, ViewTopCustomers
+# 9. AirlineStaff: CreateNewFlights, ChangeFlightStatus, AddAirplane, AddAirport, 
+#           ViewBookingAgents, ViewReports, RevenueComparison, ViewTopDestinations
+# 10. enforce constraints: e.g. customer can't create new flights
+# 11. prevent SQL injection
+
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
 import mysql.connector
@@ -42,9 +56,6 @@ def login():
 @app.route('/register')
 def register():
     return render_template('register.html')
-
-
-
 
 
 # Authenticates the login
