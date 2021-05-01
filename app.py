@@ -1,5 +1,4 @@
 ### REQUIREMENTS ### (delete when complete)
-# 1. public info
 # 2. three types of registrations
 # 3. three types of user login
 # 4. password hashed before saving to db
@@ -10,7 +9,6 @@
 # 9. AirlineStaff: CreateNewFlights, ChangeFlightStatus, AddAirplane, AddAirport, 
 #           ViewBookingAgents, ViewReports, RevenueComparison, ViewTopDestinations
 # 10. enforce constraints: e.g. customer can't create new flights
-# 11. prevent SQL injection
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -114,9 +112,9 @@ def SearchFlight():
 @app.route('/SearchFlightStatus', methods=['GET', 'POST'])
 def SearchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
-	flight_num = check_injection(request.form['flight_num'])
-	arrival_date = request.form['arrival_date']
-	departure_date = request.form['departure_date']
+    flight_num = check_injection(request.form['flight_num'])
+    arrival_date = request.form['arrival_date']
+    departure_date = request.form['departure_date']
 
     cursor = conn.cursor()
     query = """
@@ -129,14 +127,14 @@ def SearchFlightStatus():
 		ORDER BY airline_name, flight_num
         """
     cursor.execute(query, (flight_num, flight_num, arrival_date, arrival_date, departure_date, departure_date, airline_name, airline_name))
-	data = cursor.fetchall() 
-	cursor.close()
-	
-	if data: # has info
-		return render_template('Home.html', statuses=data)
-	else: # no info
-		error = 'Sorry! We cannot find information about this flight.'
-		return render_template('Home.html', error2=error)
+    data = cursor.fetchall() 
+    cursor.close()
+    
+    if data: # has info
+        return render_template('Home.html', statuses=data)
+    else: # no info
+        error = 'Sorry! We cannot find information about this flight.'
+        return render_template('Home.html', error2=error)
 
 
 
