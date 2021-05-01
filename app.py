@@ -1,7 +1,4 @@
 ### REQUIREMENTS ### (delete when complete)
-# 2. three types of registrations
-# 3. three types of user login
-# 4. password hashed before saving to db
 # 5. home page should deal with error message and link to other interfaces
 # 6. general use cases: ViewMyFlights, SearchFlights, Logout
 # 7. Customer: PurchaseTickets, TrackMySpending
@@ -242,32 +239,72 @@ def StaffRegister():
         return redirect('/login')
 
 
-# Authenticates the login
-@app.route('/loginAuth', methods=['GET', 'POST'])
-def loginAuth():
-    # grabs information from the forms
-    username = request.form['username']
+# -------- Three Types of Users Login -----------
+# 1. customer login authentication
+@app.route('/Login', methods=['GET', 'POST'])
+def Login():
+    email = check_injection(request.form['email'])
     password = request.form['password']
 
-    # cursor used to send queries
     cursor = conn.cursor()
-    # executes query
-    query = "SELECT * FROM user WHERE username = \'{}\' and password = \'{}\'"
-    cursor.execute(query.format(username, password))
-    # stores the results in a variable
+    query = "SELECT * FROM customer WHERE email = '{}' and password = '{}'"
+    cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
     data = cursor.fetchone()
-    # use fetchall() if you are expecting more than 1 data row
     cursor.close()
     error = None
-    if(data):
-        # creates a session for the the user
-        # session is a built in
-        session['username'] = username
-        return redirect(url_for('home'))
+
+    if data:
+        session['Customer'] = email
+        return redirect("/CustomerHome")
+
     else:
-        # returns an error message to the html page
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
+
+
+# 2. booking agent login authentication
+@app.route('/AgentLogin', methods=['GET', 'POST'])
+def AgentLogin():
+    # grabs information from the forms
+    email = check_injection(request.form['email'])
+    password = request.form['password']
+
+    cursor = conn.cursor()
+    query = "SELECT * FROM booking_agent WHERE email = '{}' and password = '{}'"
+    cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+    data = cursor.fetchone()
+    cursor.close()
+    error = None
+
+    if data:
+        session['BookingAgent'] = email
+        return redirect("/BookingAgentHome")
+    else:
+        error = 'Invalid login or username'
+        return render_template('login.html', error=error)
+
+
+# 3. staff login authentication
+@app.route('/StaffLogin', methods=['GET', 'POST'])
+def StaffLogin():
+    username = check_injection(request.form['username'])
+    password = request.form['password']
+
+    cursor = conn.cursor()
+    query = "SELECT * FROM airline_staff WHERE username = '{}' and password = '{}'"
+    cursor.execute(query.format(username, hashlib.md5(password.encode()).hexdigest()))
+    data = cursor.fetchone()
+    cursor.close()
+    error = None
+
+    if data:
+        session['AirlineStaff'] = [username, data[-1]] # associated airline
+        return redirect('/StaffHome')
+    else:
+        error = 'Invalid login or username'
+        return render_template('login.html', error=error)
+
+
 
 
 @app.route('/home')
