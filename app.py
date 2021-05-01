@@ -13,6 +13,7 @@
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
 import mysql.connector
+import hashlib
 from datetime import datetime, date
 
 # Initialize the app from Flask (and reference templates!)
@@ -137,6 +138,108 @@ def SearchFlightStatus():
         return render_template('Home.html', error2=error)
 
 
+# -------- Three Types of Registrations -----------
+# note that password needs to be hashed before saving to database
+
+# 1. customer regitsrtaion authentication
+@app.route('/Register', methods=['GET', 'POST'])
+def Register():
+    email = check_injection(request.form['email'])
+    name = check_injection(request.form['name'])
+    password = request.form['password']
+    building_number = check_injection(request.form['building_number'])
+    street = check_injection(request.form['street'])
+    city = check_injection(request.form['city'])
+    state = check_injection(request.form['state'])
+    phone_number = check_injection(request.form['phone_number'])
+    passport_number = check_injection(request.form['passport_number'])
+    passport_expiration = check_injection(request.form['passport_expiration'])
+    passport_country = check_injection(request.form['passport_country'])
+    date_of_birth = check_injection(request.form['date_of_birth'])
+    
+    if not len(password) >= 4:
+        flash("Password length must be at least 4 characters. Please enter another password.")
+        return redirect(request.url)
+
+    cursor = conn.cursor()
+    query = "SELECT * FROM Customer WHERE email = '{}'"
+    cursor.execute(query.format(email))
+    data = cursor.fetchone()
+    error = None
+
+    if data:
+        error = "This user already exists. Please try logging in."
+        return render_template('register.html', error=error)
+    
+    else:
+        try:
+            ins = "INSERT INTO Customer VALUES(\'{}\', \'{}\', md5(\'{}\'), \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\')"
+            cursor.execute(ins.format(email, name, hashlib.md5(password.encode()).hexdigest(), 
+                                        building_number, street, city, state, phone_number, 
+                                        passport_number, passport_expiration, passport_country, date_of_birth))
+            conn.commit()
+            cursor.close()
+        except:
+            return render_template('register.html', error='Failed to register user.')
+        return redirect('/login')
+
+
+# 2. booking agent registration authentication
+@app.route('/AgentRegister', methods=['GET', 'POST'])
+def AgentRegister():
+    email = check_injection(request.form['email'])
+    password = request.form['password']
+    booking_agent_id = check_injection(request.form['booking_agent_id'])
+
+    cursor = conn.cursor()
+    query = "SELECT * FROM BookingAgent WHERE email = '{}'"
+    cursor.execute(query.format(email))
+    data = cursor.fetchone()
+    error = None
+    
+    if data:
+        error = "This user already exists. Please try logging in."
+        return render_template('register.html', error=error)
+    
+    else:
+        try:
+            ins = "INSERT INTO BookingAgent VALUES(\'{}\', md5(\'{}\'), \'{}\')"
+            cursor.execute(ins.format(email, hashlib.md5(password.encode()).hexdigest(), booking_agent_id))
+            conn.commit()
+            cursor.close()
+        except:
+            return render_template('register.html', error='Failed to register user.')
+        return redirect('/login')
+
+# 3. airline staff registration authentication
+@app.route('/StaffRegister', methods=['GET', 'POST'])
+def StaffRegister():
+    username = check_injection(request.form['username'])
+    password = request.form['password']
+    first_name = check_injection(request.form['first_name'])
+    last_name = check_injection(request.form['last_name'])
+    date_of_birth = check_injection(request.form['date_of_birth'])
+    airline_name = check_injection(request.form['airline_name'])
+
+    cursor = conn.cursor()
+    query = "SELECT * FROM AirlineStaff WHERE username = '{}'"
+    cursor.execute(query.format(username))
+    data = cursor.fetchone()
+    error = None
+
+    if data:
+        error = "This user already exists. Please try logging in."
+        return render_template('register.html', error=error)
+    
+    else:
+        try:
+            ins = "INSERT INTO airline_staff VALUES(\'{}\', md5(\'{}\'), \'{}\', \'{}\', \'{}\', \'{}\')"
+            cursor.execute(ins.format(username, hashlib.md5(password.encode()).hexdigest(), first_name, last_name, date_of_birth, airline_name))
+            conn.commit()
+            cursor.close()
+        except:
+            return render_template('register.html', error=True)
+        return redirect('/login')
 
 
 # Authenticates the login
@@ -165,38 +268,6 @@ def loginAuth():
         # returns an error message to the html page
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
-
-# Authenticates the register
-@app.route('/registerAuth', methods=['GET', 'POST'])
-def registerAuth():
-    # grabs information from the forms
-    username = request.form['username']
-    password = request.form['password']
-
-#	if not len(password) >= 4:
-#                flash("Password length must be at least 4 characters")
- #               return redirect(request.url)
-
-    # cursor used to send queries
-    cursor = conn.cursor()
-    # executes query
-    query = "SELECT * FROM user WHERE username = \'{}\'"
-    cursor.execute(query.format(username))
-    # stores the results in a variable
-    data = cursor.fetchone()
-    # use fetchall() if you are expecting more than 1 data row
-    error = None
-    if(data):
-        # If the previous query returns data, then user exists
-        error = "This user already exists"
-        return render_template('register.html', error=error)
-    else:
-        ins = "INSERT INTO user VALUES(\'{}\', \'{}\')"
-        cursor.execute(ins.format(username, password))
-        conn.commit()
-        cursor.close()
-        flash("You are logged in")
-        return render_template('index.html')
 
 
 @app.route('/home')
