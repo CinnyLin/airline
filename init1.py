@@ -1,23 +1,36 @@
-#!C:/Users/lx615/AppData/Local/Programs/Python/Python38-32/python
-
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
 import mysql.connector
+from datetime import datetime, date
 
-# Initialize the app from Flask
-app = Flask(__name__)
+# Initialize the app from Flask (and reference templates!)
+app = Flask(__name__,
+            static_url_path="/",
+            static_folder="static")
 
 # Configure MySQL
 conn = mysql.connector.connect(host='localhost',
                                user='root',
                                password='',
-                               database='blog')
+                               database='airline')
                                #port=3306)
 
 
 # Define a route to hello function
 @app.route('/')
 def hello():
+    if 'Customer' in session:
+        return redirect('/Home')
+    elif 'BookingAgent' in session:
+        return redirect('/BookingAgentHome')
+    elif 'AirlineStaff' in session:
+        return redirect('/AirlineStaffHome')
+    else:
+        return render_template('index.html')
+
+# Define route for home
+@app.route('/index')
+def index():
     return render_template('index.html')
 
 # Define route for login
