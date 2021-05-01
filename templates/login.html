@@ -1,19 +1,65 @@
+<!DOCTYPE html>
 <html>
+
 <head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Home</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="static/images/favicon.png" rel="icon" />
+<link href="static/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/animate.css">
+<link rel="stylesheet" href="css/icomoon.css">
+<link rel="stylesheet" href="css/bootstrap.css">
+<link rel="stylesheet" href="css/superfish.css">
+<link rel="stylesheet" href="css/magnific-popup.css">
+<link rel="stylesheet" href="css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="css/cs-select.css">
+<link rel="stylesheet" href="css/cs-skin-border.css">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- modern JS -->
+<script src="js/modernizr-2.6.2.min.js"></script>
 </head>
+
 <body>
-<form action="/loginAuth" method="POST">
-	<input type="text" name = "username" placeholder="username" required/> </br>
-	<input type="password" name = "password" placeholder="password" required/></br>
-	<input type="submit" value = Login />
-	{% if error %}
-		<p class="error"><strong>Error:</strong> {{error}}</p>
+{% with message = get_flashed_messages() %}
+	{% if not message %}
+		<a href="/login/customer">Login - Customer</a> ||
+		<a href="/register/customer">Register - Customer</a>
+		<br><br>
+		<a href="/login/agent">Login - Booking Agent</a> ||
+		<a href="/register/agent">Register - Booking Agent</a>
+		<br><br>
+		<a href="/login/staff">Login - Airline Staff</a> ||
+		<a href="/register/staff">Register - Airline Staff</a>
 	{% endif %}
-</form>
 
-<a href="/">Go back</a>
+	{% if message %}
+		<a href="/logout">Logout</a>
+		<a href="/remove_account">Remove Account</a>
+		<p class="message">{{message}} You have {{num}} follower(s)</p> </br>
+		<a href="/tweets">View your tweets</a> </br>
+		<a href="/find_people">Find people to follow</a> </br>
+		<a href="/unfollow">Unfollow someone</a> </br>
+		<a href="/view_followed">View people you have followed</a> </br>
+		</br>
 
+        	<h4>15 most recent tweets from you and your followers </h4> </br>
+
+		{% for line in tweets%}
+	        	<p>{{line}}</p>
+	        	<hr>
+		{% endfor %}
+	{% endif %}
+{% endwith %}
 </body>
-
 
 </html>

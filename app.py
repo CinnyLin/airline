@@ -13,45 +13,25 @@ import mysql.connector
 import hashlib
 from datetime import datetime, date
 
+
 # Initialize the app from Flask (and reference templates!)
 app = Flask(__name__,
             static_url_path="/",
             static_folder="static")
 
+
 # Configure MySQL
 conn = mysql.connector.connect(host='localhost',
                                user='root',
-                               password='',
-                               database='airline')
-                               #port=3306)
+                               password='password',  # comment out this line if not needed
+                               database='air',
+                               port=3306)
 
-
-# Define a route to hello function
-@app.route('/')
-def hello():
-    if 'Customer' in session:
-        return redirect('/CustomerHome')
-    elif 'BookingAgent' in session:
-        return redirect('/BookingAgentHome')
-    elif 'AirlineStaff' in session:
-        return redirect('/AirlineStaffHome')
-    else:
-        return render_template('index.html')
-
-# Define route for home
-@app.route('/index')
-def index():
-    return render_template('index.html')
 
 # Define route for login
-@app.route('/login')
-def login():
+@app.route('/')
+def index():
     return render_template('login.html')
-
-# Define route for register
-@app.route('/register')
-def register():
-    return render_template('register.html')
 
 
 # --------- prevent SQL injection --------
@@ -66,15 +46,15 @@ def check_injection(string_input):
 	return sql_input
 
 
-# --------- Public Information --------
-# 1. View Public Info: All users, whether logged in or not, can
-@app.route('/')
-def publicHome():
-	return render_template('Home.html')
+# --------- More preventive actions --------
+# --------- More preventive actions --------
 
+
+# --------- Public Information --------
+# All users, whether logged in or not, can view this page
 # a. Search for upcoming flights based on source city/airport name, destination city/airport name, date.
-@app.route('/SearchFlight', methods=['GET', 'POST'])
-def SearchFlight():
+@app.route('/searchFlight', methods=['GET', 'POST'])
+def searchFlight():
     departure_city = check_injection(request.form['departure_city'])
     departure_airport = check_injection(request.form['departure_airport'])
     arrival_city = check_injection(request.form['arrival_city'])
@@ -105,10 +85,9 @@ def SearchFlight():
         error = 'Sorry! We cannot find information about this flight.'
         return render_template('Home.html', error1=error)
 
-
 # b. Will be able to see the flights status based on flight number, arrival/departure date.
-@app.route('/SearchFlightStatus', methods=['GET', 'POST'])
-def SearchFlightStatus():
+@app.route('/searchFlightStatus', methods=['GET', 'POST'])
+def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
     flight_num = check_injection(request.form['flight_num'])
     arrival_date = request.form['arrival_date']
@@ -135,12 +114,25 @@ def SearchFlightStatus():
         return render_template('Home.html', error2=error)
 
 
-# -------- Three Types of Registrations -----------
-# note that password needs to be hashed before saving to database
+# -------- Three Types of Registration -----------
+@app.route('/register/customer')
+def registerCustomer():
+    return render_template('registerCustomer.html')
 
-# 1. customer regitsrtaion authentication
-@app.route('/Register', methods=['GET', 'POST'])
-def Register():
+@app.route('/register/agent')
+def registerAgent():
+    return render_template('registerBookingAgent.html')
+
+@app.route('/register/staff')
+def registerStaff():
+    return render_template('registerAirlineStaff.html')
+
+
+# -------- Three Types of Registration Authentication -----------
+# note that password needs to be hashed before saving to database
+# 1. customer registration authentication
+@app.route('/register/customer/auth', methods=['GET', 'POST'])
+def registerCustomerAuth():
     email = check_injection(request.form['email'])
     name = check_injection(request.form['name'])
     password = request.form['password']
@@ -166,7 +158,7 @@ def Register():
 
     if data:
         error = "This user already exists. Please try logging in."
-        return render_template('register.html', error=error)
+        return render_template('registerCustomer.html', error=error)
     
     else:
         try:
@@ -177,13 +169,12 @@ def Register():
             conn.commit()
             cursor.close()
         except:
-            return render_template('register.html', error='Failed to register user.')
-        return redirect('/login')
-
+            return render_template('registerCustomer.html', error='Failed to register user.')
+        return redirect('/home/customer')
 
 # 2. booking agent registration authentication
-@app.route('/AgentRegister', methods=['GET', 'POST'])
-def AgentRegister():
+@app.route('/register/agent/auth', methods=['GET', 'POST'])
+def registerAgentAuth():
     email = check_injection(request.form['email'])
     password = request.form['password']
     booking_agent_id = check_injection(request.form['booking_agent_id'])
@@ -206,11 +197,11 @@ def AgentRegister():
             cursor.close()
         except:
             return render_template('register.html', error='Failed to register user.')
-        return redirect('/login')
+        return redirect('/bookingAgentHome')
 
 # 3. airline staff registration authentication
-@app.route('/StaffRegister', methods=['GET', 'POST'])
-def StaffRegister():
+@app.route('/register/staff/auth', methods=['GET', 'POST'])
+def registerStaffAuth():
     username = check_injection(request.form['username'])
     password = request.form['password']
     first_name = check_injection(request.form['first_name'])
@@ -236,13 +227,27 @@ def StaffRegister():
             cursor.close()
         except:
             return render_template('register.html', error=True)
-        return redirect('/login')
+        return redirect('/airlineStaffHome')
 
 
 # -------- Three Types of Users Login -----------
+@app.route('/login/customer')
+def loginCustomer():
+    return render_template('loginCustomer.html')
+
+@app.route('/login/agent')
+def loginAgent():
+    return render_template('loginAgent.html')
+
+@app.route('/login/staff')
+def loginStaff():
+    return render_template('loginStaff.html')
+
+
+# -------- Three Types of Users Login Authentication -----------
 # 1. customer login authentication
-@app.route('/Login', methods=['GET', 'POST'])
-def Login():
+@app.route('/login/customer/auth', methods=['GET', 'POST'])
+def loginCustomerAuth():
     email = check_injection(request.form['email'])
     password = request.form['password']
 
@@ -254,17 +259,16 @@ def Login():
     error = None
 
     if data:
-        session['Customer'] = email
-        return redirect("/CustomerHome")
+        session['customer'] = email
+        return redirect("/customerHome")
 
     else:
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
-
 # 2. booking agent login authentication
-@app.route('/AgentLogin', methods=['GET', 'POST'])
-def AgentLogin():
+@app.route('/login/agent/auth', methods=['GET', 'POST'])
+def loginAgentAuth():
     # grabs information from the forms
     email = check_injection(request.form['email'])
     password = request.form['password']
@@ -277,16 +281,15 @@ def AgentLogin():
     error = None
 
     if data:
-        session['BookingAgent'] = email
-        return redirect("/BookingAgentHome")
+        session['bookingAgent'] = email
+        return redirect("/bookingAgentHome")
     else:
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
-
 # 3. staff login authentication
-@app.route('/StaffLogin', methods=['GET', 'POST'])
-def StaffLogin():
+@app.route('/login/staff/auth', methods=['GET', 'POST'])
+def loginStaffAuth():
     username = check_injection(request.form['username'])
     password = request.form['password']
 
@@ -298,43 +301,101 @@ def StaffLogin():
     error = None
 
     if data:
-        session['AirlineStaff'] = [username, data[-1]] # associated airline
-        return redirect('/StaffHome')
+        session['airlineStaff'] = [username, data[-1]] # associated airline
+        return redirect('/staffHome')
     else:
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
 
+# -------- General Use Cases for Three Users -----------
+# 1. View My Flights
 
+# 2. Search for Flights
 
-@app.route('/home')
-def home():
-
-    username = session['username']
-    cursor = conn.cursor()
-    query = "SELECT ts, blog_post FROM blog WHERE username = \'{}\' ORDER BY ts DESC"
-    cursor.execute(query.format(username))
-    data1 = cursor.fetchall()
-    cursor.close()
-    return render_template('home.html', username=username, posts=data1)
-
-
-@app.route('/post', methods=['GET', 'POST'])
-def post():
-    username = session['username']
-    cursor = conn.cursor()
-    blog = request.form['blog']
-    query = "INSERT INTO blog (blog_post, username) VALUES(\'{}\', \'{}\')"
-    cursor.execute(query.format(blog, username))
-    conn.commit()
-    cursor.close()
-    return redirect(url_for('home'))
-
-
+# 3. Logout
 @app.route('/logout')
 def logout():
     session.pop('username')
     return redirect('/')
+
+
+# -------- Customer Exlusive Use Cases -----------
+# 1. Customer Homepage
+@app.route('/home/customer')
+def homeCustomer():
+	if session.get('email'):
+		email = check_injection(session['email'])
+
+		cursor = conn.cursor()
+		query = "SELECT ticket_id, airline_name, airplane_id, flight_num, \
+			D.airport_city, \
+			departure_airport, A.airport_city, arrival_airport, departure_time, arrival_time, status \
+				FROM flight NATURAL JOIN purchases NATURAL JOIN ticket, airport as D, airport as A\
+					WHERE customer_email = \'{}\' and status = 'upcoming' and \
+					D.airport_name = departure_airport and A.airport_name = arrival_airport"
+		cursor.execute(query.format(email))
+		data1 = cursor.fetchall() 
+		cursor.close()
+		return render_template('customerHome.html', email=email, emailName=email.split('@')[0], view_my_flights=data1)
+	else:
+		session.clear()
+		return render_template('404.html')
+
+# 2. Customer Purchase Tickets
+@app.route('/purchase/customer', methods=['GET', 'POST'])
+def purchaseCustomer():
+	if session.get('email'):
+		email = session['email']
+		db_email = check_apostrophe(email)
+		airline_name = check_apostrophe(request.form['airline_name'])
+		flight_num = request.form['flight_num']
+
+		cursor = conn.cursor()
+		# query = "SELECT ticket_id \
+		# 		FROM flight NATURAL JOIN ticket \
+		# 		WHERE flight_num = \'{}\' AND \
+		# 			ticket_id NOT IN (SELECT ticket_id \
+		# 								FROM flight NATURAL JOIN ticket NATURAL JOIN purchases)\
+		# 			AND flight_num = \'{}\'"
+		# there is no extra failsafe anymore 
+		query = "SELECT * \
+				FROM flight \
+				WHERE airline_name = \'{}\' AND flight_num = \'{}\' AND num_tickets_left > 0"
+		cursor.execute(query.format(airline_name, flight_num))
+		# cursor.execute(query.format(flight_num, flight_num))
+		data = cursor.fetchall()
+		cursor.close()
+
+		if(data):
+			cursor = conn.cursor()
+			# calc the new ticket id = biggest id + 1
+			cursor = conn.cursor()
+			query_id = "SELECT ticket_id \
+						FROM ticket \
+						ORDER BY ticket_id DESC \
+						LIMIT 1"
+			cursor.execute(query_id)
+			ticket_id_data = cursor.fetchone() # (74373,)
+			new_ticket_id = int(ticket_id_data[0]) + 1
+			# first insert into ticket
+			ins1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
+			cursor.execute(ins1.format(new_ticket_id, airline_name, flight_num))
+			# then insert into purchases
+			ins = "INSERT INTO purchases VALUES (\'{}\', \'{}\', NULL, CURDATE())"
+			cursor.execute(ins.format(new_ticket_id, db_email))
+			conn.commit()
+			cursor.close()
+			message1 = 'Ticket bought successfully!'
+			return render_template('cusSearchPurchase.html', email = email, message1 = message1)
+		else:
+			error = 'No ticket'
+			return render_template('cusSearchPurchase.html', error2=error, email = email, emailName=email.split('@')[0])
+	else:
+		session.clear()
+		return render_template('404.html')
+
+# 3. Track My Spending
 
 
 app.secret_key = 'some key that you will never guess'

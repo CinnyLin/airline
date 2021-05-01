@@ -1,4 +1,4 @@
-CREATE TABLE `Airline` (
+CREATE TABLE `airline` (
   `airline_name` varchar(50) NOT NULL,
   PRIMARY KEY(`airline_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -6,10 +6,10 @@ CREATE TABLE `Airline` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `AirlineStaff`
+-- Table structure for table `airlineStaff`
 --
 
-CREATE TABLE `AirlineStaff` (
+CREATE TABLE `airlineStaff` (
   `username` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
   `first_name` varchar(50) NOT NULL,
@@ -23,10 +23,10 @@ CREATE TABLE `AirlineStaff` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `Airplane`
+-- Table structure for table `airplane`
 --
 
-CREATE TABLE `Airplane` (
+CREATE TABLE `airplane` (
   `airline_name` varchar(50) NOT NULL,
   `airplane_id` int(11) NOT NULL,
   `seats` int(11) NOT NULL,
@@ -37,10 +37,10 @@ CREATE TABLE `Airplane` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `Airport`
+-- Table structure for table `airport`
 --
 
-CREATE TABLE `Airport` (
+CREATE TABLE `airport` (
   `airport_name` varchar(50) NOT NULL,
   `airport_city` varchar(50) NOT NULL,
   PRIMARY KEY(`airport_name`)
@@ -49,10 +49,10 @@ CREATE TABLE `Airport` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `BookingAgent`
+-- Table structure for table `bookingAgent`
 --
 
-CREATE TABLE `BookingAgent` (
+CREATE TABLE `bookingAgent` (
   `email` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
   `booking_agent_id` int(11) NOT NULL,
@@ -62,10 +62,10 @@ CREATE TABLE `BookingAgent` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `Customer`
+-- Table structure for table `customer`
 --
 
-CREATE TABLE `Customer` (
+CREATE TABLE `customer` (
   `email` varchar(50) NOT NULL,
   `name` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
@@ -84,10 +84,10 @@ CREATE TABLE `Customer` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `Flight`
+-- Table structure for table `flight`
 --
 
-CREATE TABLE `Flight` (
+CREATE TABLE `flight` (
   `airline_name` varchar(50) NOT NULL,
   `flight_num` int(11) NOT NULL,
   `departure_airport` varchar(50) NOT NULL,
@@ -107,10 +107,10 @@ CREATE TABLE `Flight` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `Ticket`
+-- Table structure for table `ticket`
 --
 
-CREATE TABLE `Ticket` (
+CREATE TABLE `ticket` (
   `ticket_id` int(11) NOT NULL,
   `airline_name` varchar(50) NOT NULL,
   `flight_num` int(11) NOT NULL,
