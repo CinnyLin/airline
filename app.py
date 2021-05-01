@@ -34,7 +34,7 @@ conn = mysql.connector.connect(host='localhost',
 @app.route('/')
 def hello():
     if 'Customer' in session:
-        return redirect('/Home')
+        return redirect('/CustomerHome')
     elif 'BookingAgent' in session:
         return redirect('/BookingAgentHome')
     elif 'AirlineStaff' in session:
@@ -56,6 +56,89 @@ def login():
 @app.route('/register')
 def register():
     return render_template('register.html')
+
+
+# --------- prevent SQL injection --------
+def check_injection(string_input):
+	assert type(string_input) == str
+	if "'" not in string_input:
+		return string_input
+	sql_input = ''
+	for char in string_input:
+		if char != "'":
+			sql_input += char
+	return sql_input
+
+
+# --------- Public Information --------
+# 1. View Public Info: All users, whether logged in or not, can
+@app.route('/')
+def publicHome():
+	return render_template('Home.html')
+
+# a. Search for upcoming flights based on source city/airport name, destination city/airport name, date.
+@app.route('/SearchFlight', methods=['GET', 'POST'])
+def SearchFlight():
+    departure_city = check_injection(request.form['departure_city'])
+    departure_airport = check_injection(request.form['departure_airport'])
+    arrival_city = check_injection(request.form['arrival_city'])
+    arrival_airport = check_injection(request.form['arrival_airport'])
+    departure_date = request.form['departure_date']
+    arrival_date = request.form['arrival_date']
+
+    cursor = conn.cursor()
+    query = """
+        SELECT * \
+        FROM Flight, Airport \
+        WHERE departure_airport = if (\'{}\' = '', departure_airport, \'{}\') AND \
+            arrival_airport = if (\'{}\' = '', arrival_airport, \'{}\') AND \
+            status = 'upcoming' AND \
+            departure_city = if (\'{}\' = '', departure_city, \'{}\') AND \
+            arrival_city = if (\'{}\' = '', arrival_city, \'{}\') AND \
+            date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
+            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') \
+		ORDER BY airline_name, flight_num
+        """
+    cursor.execute(query, (departure_airport, departure_airport, arrival_airport, arrival_airport, departure_city, departure_city, arrival_city, arrival_city, departure_date, departure_date, arrival_date, arrival_date))
+    data = cursor.fetchall()
+    cursor.close()
+
+    if data: # has info
+        return render_template('Home.html', upcoming_flights=data)
+    else: # no info
+        error = 'Sorry! We cannot find information about this flight.'
+        return render_template('Home.html', error1=error)
+
+
+# b. Will be able to see the flights status based on flight number, arrival/departure date.
+@app.route('/SearchFlightStatus', methods=['GET', 'POST'])
+def SearchFlightStatus():
+    airline_name = check_injection(request.form['airline_name'])
+	flight_num = check_injection(request.form['flight_num'])
+	arrival_date = request.form['arrival_date']
+	departure_date = request.form['departure_date']
+
+    cursor = conn.cursor()
+    query = """
+        SELECT * \
+		FROM Flight \
+		WHERE flight_num = if (\'{}\' = '', flight_num, \'{}\') AND \
+            date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
+            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+            airline_name = if (\'{}\' = '', airline_name, \'{}\') \
+		ORDER BY airline_name, flight_num
+        """
+    cursor.execute(query, (flight_num, flight_num, arrival_date, arrival_date, departure_date, departure_date, airline_name, airline_name))
+	data = cursor.fetchall() 
+	cursor.close()
+	
+	if data: # has info
+		return render_template('Home.html', statuses=data)
+	else: # no info
+		error = 'Sorry! We cannot find information about this flight.'
+		return render_template('Home.html', error2=error)
+
+
 
 
 # Authenticates the login
