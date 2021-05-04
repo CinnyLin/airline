@@ -7,6 +7,10 @@
 #           ViewBookingAgents, ViewReports, RevenueComparison, ViewTopDestinations
 # 10. enforce constraints: e.g. customer can't create new flights
 
+### ADDITIONAL FEATURES ###
+# 1. choose to book one-way or round-trip
+# 2. chatbot connects to booking agent to automatically book for you
+
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
 import mysql.connector
@@ -21,10 +25,12 @@ app = Flask(__name__,
 
 
 # Configure MySQL
+# for Cinny: don't need password, database name is "airline"
+# for Zoe: need password, database name is "air"
 conn = mysql.connector.connect(host='localhost',
                                user='root',
-                               password='password',  # comment out this line if not needed
-                               database='air',
+                               #password='password',  # comment out this line if not needed
+                               database='airline',
                                port=3306)
 
 
@@ -34,7 +40,7 @@ def index():
     return render_template('login.html')
 
 
-# --------- prevent SQL injection --------
+# --------- Prevent SQL injection --------
 def check_injection(string_input):
 	assert type(string_input) == str
 	if "'" not in string_input:
@@ -50,9 +56,11 @@ def check_injection(string_input):
 # --------- More preventive actions --------
 
 
-# --------- Public Information --------
+# --------- Public Information: Search Flights  --------
 # All users, whether logged in or not, can view this page
-# a. Search for upcoming flights based on source city/airport name, destination city/airport name, date.
+# PROBLEM: Customers and booking agents have "search flights" function can they use this function?
+
+# 1. Search flights based on source city/airport name, destination city/airport name, date.
 @app.route('/searchFlight', methods=['GET', 'POST'])
 def searchFlight():
     departure_city = check_injection(request.form['departure_city'])
@@ -85,7 +93,7 @@ def searchFlight():
         error = 'Sorry! We cannot find information about this flight.'
         return render_template('Home.html', error1=error)
 
-# b. Will be able to see the flights status based on flight number, arrival/departure date.
+# 2. Search flights status based on flight number, arrival/departure date.
 @app.route('/searchFlightStatus', methods=['GET', 'POST'])
 def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
@@ -115,6 +123,7 @@ def searchFlightStatus():
 
 
 # -------- Three Types of Registration -----------
+# PROBLEM: with the current template, i don't know which date is birthday and which date is passport expiration
 @app.route('/register/customer')
 def registerCustomer():
     return render_template('registerCustomer.html')
@@ -129,8 +138,9 @@ def registerStaff():
 
 
 # -------- Three Types of Registration Authentication -----------
-# note that password needs to be hashed before saving to database
-# 1. customer registration authentication
+# Note that password needs to be hashed before saving to database
+
+# 1. Customer Registration Authentication
 @app.route('/register/customer/auth', methods=['GET', 'POST'])
 def registerCustomerAuth():
     email = check_injection(request.form['email'])
@@ -172,7 +182,7 @@ def registerCustomerAuth():
             return render_template('registerCustomer.html', error='Failed to register user.')
         return redirect('/home/customer')
 
-# 2. booking agent registration authentication
+# 2. Booking Agent Registration Authentication
 @app.route('/register/agent/auth', methods=['GET', 'POST'])
 def registerAgentAuth():
     email = check_injection(request.form['email'])
@@ -197,9 +207,9 @@ def registerAgentAuth():
             cursor.close()
         except:
             return render_template('register.html', error='Failed to register user.')
-        return redirect('/bookingAgentHome')
+        return redirect('/homeBookingAgent')
 
-# 3. airline staff registration authentication
+# 3. Airline Staff Registration Authentication
 @app.route('/register/staff/auth', methods=['GET', 'POST'])
 def registerStaffAuth():
     username = check_injection(request.form['username'])
@@ -227,7 +237,7 @@ def registerStaffAuth():
             cursor.close()
         except:
             return render_template('register.html', error=True)
-        return redirect('/airlineStaffHome')
+        return redirect('/homeAirlineStaff')
 
 
 # -------- Three Types of Users Login -----------
@@ -245,7 +255,10 @@ def loginStaff():
 
 
 # -------- Three Types of Users Login Authentication -----------
-# 1. customer login authentication
+
+# 1. Customer Login Authentication
+# PROBLEM: currently when i register, it prompts me to login because my name was already in the database,
+# but when i try to log in it brings me back to register page instead of prompting me to CustomerHome
 @app.route('/login/customer/auth', methods=['GET', 'POST'])
 def loginCustomerAuth():
     email = check_injection(request.form['email'])
@@ -260,13 +273,13 @@ def loginCustomerAuth():
 
     if data:
         session['customer'] = email
-        return redirect("/customerHome")
+        return redirect("/homeCustomer")
 
     else:
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
-# 2. booking agent login authentication
+# 2. Booking Agent Login Authentication
 @app.route('/login/agent/auth', methods=['GET', 'POST'])
 def loginAgentAuth():
     # grabs information from the forms
@@ -282,12 +295,12 @@ def loginAgentAuth():
 
     if data:
         session['bookingAgent'] = email
-        return redirect("/bookingAgentHome")
+        return redirect("/homeBookingAgent")
     else:
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
-# 3. staff login authentication
+# 3. Staff Login Authentication
 @app.route('/login/staff/auth', methods=['GET', 'POST'])
 def loginStaffAuth():
     username = check_injection(request.form['username'])
@@ -308,15 +321,10 @@ def loginStaffAuth():
         return render_template('login.html', error=error)
 
 
-# -------- General Use Cases for Three Users -----------
-# 1. View My Flights
-
-# 2. Search for Flights
-
-# 3. Logout
+# -------- Three Types of Users Logout -----------
 @app.route('/logout')
 def logout():
-    session.pop('username')
+    session.clear() #session.pop('username')
     return redirect('/')
 
 
@@ -328,48 +336,50 @@ def homeCustomer():
 		email = check_injection(session['email'])
 
 		cursor = conn.cursor()
-		query = "SELECT ticket_id, airline_name, airplane_id, flight_num, \
-			D.airport_city, \
-			departure_airport, A.airport_city, arrival_airport, departure_time, arrival_time, status \
-				FROM flight NATURAL JOIN purchases NATURAL JOIN ticket, airport as D, airport as A\
-					WHERE customer_email = \'{}\' and status = 'upcoming' and \
-					D.airport_name = departure_airport and A.airport_name = arrival_airport"
+		query = """
+        SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
+        departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
+		FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
+		WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+		A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
 		cursor.execute(query.format(email))
-		data1 = cursor.fetchall() 
+		data = cursor.fetchall() 
 		cursor.close()
-		return render_template('customerHome.html', email=email, emailName=email.split('@')[0], view_my_flights=data1)
+		return render_template('homeCustomer.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
 	else:
 		session.clear()
 		return render_template('404.html')
 
-# 2. Customer Purchase Tickets
-@app.route('/purchase/customer', methods=['GET', 'POST'])
-def purchaseCustomer():
+
+# 2. Customer View Flights
+# Provide various ways for the user to see flights information they purchased. 
+# The default should show upcoming flights. Optionally, you may allow user to specify a
+# range of dates, specify destination and/or source airport name or city name etc.
+
+
+# 3. Customer Purchase Tickets
+# Customer chooses a flight and purchase ticket for this flight. 
+# PROBLEM: Implement this along with a use case to search for flights.
+@app.route('/home/customer/purchase', methods=['GET', 'POST'])
+def purchaseTicket():
 	if session.get('email'):
-		email = session['email']
-		db_email = check_apostrophe(email)
-		airline_name = check_apostrophe(request.form['airline_name'])
+		email = check_injection(email)
+		airline_name = check_injection(request.form['airline_name'])
 		flight_num = request.form['flight_num']
 
 		cursor = conn.cursor()
-		# query = "SELECT ticket_id \
-		# 		FROM flight NATURAL JOIN ticket \
-		# 		WHERE flight_num = \'{}\' AND \
-		# 			ticket_id NOT IN (SELECT ticket_id \
-		# 								FROM flight NATURAL JOIN ticket NATURAL JOIN purchases)\
-		# 			AND flight_num = \'{}\'"
-		# there is no extra failsafe anymore 
-		query = "SELECT * \
-				FROM flight \
-				WHERE airline_name = \'{}\' AND flight_num = \'{}\' AND num_tickets_left > 0"
+		query = """
+        SELECT ticket_id \
+		FROM flight NATURAL JOIN ticket \
+		WHERE flight_num = \'{}\' AND ticket_id NOT IN \
+            (SELECT ticket_id \
+		    FROM flight NATURAL JOIN ticket NATURAL JOIN purchase)\
+		AND flight_num = \'{}\'"""
 		cursor.execute(query.format(airline_name, flight_num))
-		# cursor.execute(query.format(flight_num, flight_num))
 		data = cursor.fetchall()
 		cursor.close()
 
 		if(data):
-			cursor = conn.cursor()
-			# calc the new ticket id = biggest id + 1
 			cursor = conn.cursor()
 			query_id = "SELECT ticket_id \
 						FROM ticket \
@@ -378,24 +388,80 @@ def purchaseCustomer():
 			cursor.execute(query_id)
 			ticket_id_data = cursor.fetchone() # (74373,)
 			new_ticket_id = int(ticket_id_data[0]) + 1
-			# first insert into ticket
-			ins1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
-			cursor.execute(ins1.format(new_ticket_id, airline_name, flight_num))
-			# then insert into purchases
-			ins = "INSERT INTO purchases VALUES (\'{}\', \'{}\', NULL, CURDATE())"
-			cursor.execute(ins.format(new_ticket_id, db_email))
+			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
+			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
+			insert2 = "INSERT INTO purchases VALUES (\'{}\', \'{}\', NULL, CURDATE())"
+			cursor.execute(insert2.format(new_ticket_id, email))
 			conn.commit()
 			cursor.close()
 			message1 = 'Ticket bought successfully!'
-			return render_template('cusSearchPurchase.html', email = email, message1 = message1)
+			return render_template('customerPurchase.html', email=email, message1=message1)
 		else:
-			error = 'No ticket'
-			return render_template('cusSearchPurchase.html', error2=error, email = email, emailName=email.split('@')[0])
+			error = 'No ticket found.'
+			return render_template('customerPurchase.html', error2=error, email=email, emailName=email.split('@')[0])
 	else:
 		session.clear()
 		return render_template('404.html')
 
-# 3. Track My Spending
+# 4. Track My Spending
+
+
+
+
+# ------- Booking Agent Exclusive Functions --------
+
+# 1. Booking Agent Purchased Ticket
+
+
+# 2. Booking Agent View Commissions
+
+# 3. Booking Agent View Top Customers
+
+
+
+
+# ------ Airline Staff Exclusieve Functions -------
+
+# 1. Airline Staff Create New Flights
+
+
+# 2. Airline Staff Change Flight Status
+
+
+
+# 3. Airline Staff Add New Airplane
+
+
+# 4. Airline Staff Add Airport
+
+
+# 5. Airline Staff View Booking Agents 
+# Top 5 booking agents based on number of tickets sales for the past month and past year. 
+# Top 5 booking agents based on the amount of commission received for the last year.
+
+
+# 6. Airline Staff View Frequent Customers
+# Airline Staff will also be able to see the most frequent customer within the last year. 
+# In addition, Airline Staff will be able to see a list of all flights a particular 
+# Customer has taken only on that particular airline.
+
+
+# 7. Airline Staff View Reports 
+# Total amounts of ticket sold based on range of dates/last year/last month etc. 
+# Month-wise tickets sold in a bar chart.
+
+
+# 8. Airline Staff Revenue Comparison
+# Draw a pie chart for showing total amount of revenue earned from direct sales 
+# (when customer bought tickets without using a booking agent) and total amount 
+# of revenue earned from indirect sales (when customer bought tickets using 
+# booking agents) in the last month and last year
+
+
+# 9. Airline Staff View Top Destinations 
+# Find the top 3 most popular destinations for last 3 months and last year.
+
+
 
 
 app.secret_key = 'some key that you will never guess'
