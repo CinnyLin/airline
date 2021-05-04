@@ -120,9 +120,14 @@ def searchFlightStatus():
 
 
 # -------- Three Types of Registration -----------
+# Note that password needs to be hashed before saving to database
+
 # PROBLEM: with the current template, i don't know which date is birthday and which date is passport expiration
 # PROBLEM: right now we have three seperate pages for registration and login
 #           make it one page with three tab views
+# @app.route('/register')
+# def register():
+#     return render_template('register.html')
 @app.route('/register/customer')
 def registerCustomer():
     return render_template('registerCustomer.html')
@@ -135,9 +140,6 @@ def registerAgent():
 def registerStaff():
     return render_template('registerAirlineStaff.html')
 
-
-# -------- Three Types of Registration Authentication -----------
-# Note that password needs to be hashed before saving to database
 
 # 1. Customer Registration Authentication
 @app.route('/register/customer/auth', methods=['GET', 'POST'])
@@ -160,7 +162,7 @@ def registerCustomerAuth():
         return redirect(request.url)
 
     cursor = conn.cursor()
-    query = "SELECT * FROM Customer WHERE email = '{}'"
+    query = "SELECT * FROM customer WHERE email = '{}'"
     cursor.execute(query.format(email))
     data = cursor.fetchone()
     error = None
@@ -179,7 +181,7 @@ def registerCustomerAuth():
             cursor.close()
         except:
             return render_template('registerCustomer.html', error='Failed to register user.')
-        return redirect('/home/customer')
+        return redirect('/customer/home')
 
 # 2. Booking Agent Registration Authentication
 @app.route('/register/agent/auth', methods=['GET', 'POST'])
@@ -206,7 +208,7 @@ def registerAgentAuth():
             cursor.close()
         except:
             return render_template('register.html', error='Failed to register user.')
-        return redirect('/homeBookingAgent')
+        return redirect('/agent/home')
 
 # 3. Airline Staff Registration Authentication
 @app.route('/register/staff/auth', methods=['GET', 'POST'])
@@ -236,10 +238,14 @@ def registerStaffAuth():
             cursor.close()
         except:
             return render_template('register.html', error=True)
-        return redirect('/homeAirlineStaff')
+        return redirect('/staff/home')
 
 
 # -------- Three Types of Users Login -----------
+# @app.route('/login')
+# def login():
+#     return render_template('login.html')
+
 @app.route('/login/customer')
 def loginCustomer():
     return render_template('loginCustomer.html')
@@ -252,31 +258,33 @@ def loginAgent():
 def loginStaff():
     return render_template('loginStaff.html')
 
-
-# -------- Three Types of Users Login Authentication -----------
-
 # 1. Customer Login Authentication
 # PROBLEM: currently when i register, it prompts me to login because my name was already in the database,
 # but when i try to log in it brings me back to register page instead of prompting me to CustomerHome
+# PROBLEM: when i try to login when before registering, i am first in the /login/customer page, then it directs me to login/customer/auth page
 @app.route('/login/customer/auth', methods=['GET', 'POST'])
 def loginCustomerAuth():
-    email = check_injection(request.form['email'])
-    password = request.form['password']
-
-    cursor = conn.cursor()
-    query = "SELECT * FROM customer WHERE email = '{}' and password = '{}'"
-    cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
-    data = cursor.fetchone()
-    cursor.close()
-    error = None
-
-    if data:
-        session['customer'] = email
-        return redirect("/homeCustomer")
-
+    if 'email' in request.form and 'password' in request.form:
+        email =check_injection(request.form['email'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "SELECT * FROM customer WHERE email = \'{}\' and password = \'{}\'"
+        cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        data = cursor.fetchone()
+        cursor.close()
+        
+        if data:
+            session['email'] = email
+            return redirect("/customer/home")
+        else:
+            error = 'Invalid login or email.'
+            return render_template('loginCustomer.html', error=error)
+    
     else:
-        error = 'Invalid login or username'
-        return render_template('login.html', error=error)
+        session.clear()
+        return render_template('404.html')
+
 
 # 2. Booking Agent Login Authentication
 @app.route('/login/agent/auth', methods=['GET', 'POST'])
@@ -296,8 +304,8 @@ def loginAgentAuth():
         session['bookingAgent'] = email
         return redirect("/homeBookingAgent")
     else:
-        error = 'Invalid login or username'
-        return render_template('login.html', error=error)
+        error = 'Invalid login or username.'
+        return render_template('loginAgent.html', error=error)
 
 # 3. Staff Login Authentication
 @app.route('/login/staff/auth', methods=['GET', 'POST'])
@@ -316,8 +324,8 @@ def loginStaffAuth():
         session['airlineStaff'] = [username, data[-1]] # associated airline
         return redirect('/staffHome')
     else:
-        error = 'Invalid login or username'
-        return render_template('login.html', error=error)
+        error = 'Invalid login or username.'
+        return render_template('loginStaff.html', error=error)
 
 
 # -------- Three Types of Users Logout -----------
@@ -331,23 +339,23 @@ def logout():
 # 1. Customer Homepage
 @app.route('/customer/home')
 def homeCustomer():
-	if session.get('email'):
-		email = check_injection(session['email'])
-
-		cursor = conn.cursor()
-		query = """
-            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
-		cursor.execute(query.format(email))
-		data = cursor.fetchall() 
-		cursor.close()
-		return render_template('homeCustomer.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
-	else:
-		session.clear()
-		return render_template('404.html')
+    if session.get('email'):
+        # email = check_injection(session['email'])
+        # cursor = conn.cursor()
+        # query = """
+        #     SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
+        #     departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
+        #     FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
+        #     WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+        #     A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
+        # cursor.execute(query.format(email))
+        # data = cursor.fetchall() 
+        # cursor.close()
+        # return render_template('homeCustomer.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
+        return render_template('homeCustomer.html')
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 2. Customer View Flights
 # Provide various ways for the user to see flights information they purchased. 
@@ -687,29 +695,29 @@ def staffViewFlights():
         return render_template('404.html')
     
 # 2. Airline Staff Change Flight Status
-@app.route('/staff/editFlightStatus', methods=['GET', 'POST'])
-def editFlightStatus():
-	if session.get('username'):
-		username = check_injection(session['username'])
-		status = request.form['edit_status']
-		flight_num = request.form['flight_num']
+# @app.route('/staff/editFlightStatus', methods=['GET', 'POST'])
+# def editFlightStatus():
+# 	if session.get('username'):
+# 		username = check_injection(session['username'])
+# 		status = request.form['edit_status']
+# 		flight_num = request.form['flight_num']
 		
-		cursor = conn.cursor()
-		update = "UPDATE flight set status = \'{}\' WHERE flight_num = \'{}\'"
-		cursor.execute(update.format(status, flight_num))
-		conn.commit()
+# 		cursor = conn.cursor()
+# 		update = "UPDATE flight set status = \'{}\' WHERE flight_num = \'{}\'"
+# 		cursor.execute(update.format(status, flight_num))
+# 		conn.commit()
 
-		query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
-		cursor.execute(query.format(username))
-		data = cursor.fetchall()
-        cursor.close()
+# 		query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
+# 		cursor.execute(query.format(username))
+# 		data = cursor.fetchall()
+#         cursor.close()
 
-		message = 'Flight status changed successfully.'
-		return render_template('staffFlight.html', username=username, message=message, posts=data)
+# 		message = 'Flight status changed successfully.'
+# 		return render_template('staffFlight.html', username=username, message=message, posts=data)
 	
-    else:
-		session.clear()
-		return render_template('404.html')
+#     else:
+# 		session.clear()
+# 		return render_template('404.html')
 
 # 3. Airline Staff Add New Flight
 @app.route('/staff/createFlight', methods=['GET', 'POST'])
@@ -810,48 +818,48 @@ def createFlight():
 		return render_template('404.html')
 
 # 4. Airline Staff Add New Airplane
-@app.route('staff/addAirplane', methods=['GET', 'POST'])
+@app.route('/staff/addAirplane', methods=['GET', 'POST'])
 def addAirplane():
-	if session.get('username'):
-		username = check_injection(session['username'])
-		airplane_id = request.form['airplane_id']
-		seats = request.form['seats']
-
-		cursor = conn.cursor()
-		query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
-		cursor.execute(query.format(username))
-		data2 = cursor.fetchall()
-
-		airline = "SELECT airline_name FROM airline_staff WHERE username = \'{}\'"
-		cursor.execute(airline.format(username))
-
-		airline_name = cursor.fetchone()
-		airline_name = airline_name[0]
-		query = "SELECT airline_name, airplane_id FROM airplane WHERE airline_name = \'{}\' and airplane_id = \'{}\'"
-		cursor.execute(query.format(airline_name, airplane_id))
-		data = cursor.fetchone()
-		error2 = None
-		if data:
-			error2 = "This airplane already exists."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airline_staff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			cursor.close()
-			return render_template('staffAddData.html', error2=error2, username=username, airplane=data1, posts=data2)
-		else:		
-			insert = "INSERT INTO airplane VALUES(\'{}\', \'{}\', \'{}\')"
-			cursor.execute(insert.format(airline_name, airplane_id, seats))
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airline_staff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			conn.commit()
-			cursor.close()
-			message2 = "New airplane successfully added."
-			return render_template('staffAddData.html', message2=message2, username=username, airplane=data1, posts=data2)
-	
+    if session.get('username'):
+        username = check_injection(session['username'])
+        airplane_id = request.form['airplane_id']
+        seats = request.form['seats']
+        
+        cursor = conn.cursor()
+        query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        data2 = cursor.fetchall()
+        
+        airline = "SELECT airline_name FROM airline_staff WHERE username = \'{}\'"
+        cursor.execute(airline.format(username))
+        
+        airline_name = cursor.fetchone()
+        airline_name = airline_name[0]
+        query = "SELECT airline_name, airplane_id FROM airplane WHERE airline_name = \'{}\' and airplane_id = \'{}\'"
+        cursor.execute(query.format(airline_name, airplane_id))
+        data = cursor.fetchone()
+        error2 = None
+        if data:
+            error2 = "This airplane already exists."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airline_staff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            cursor.close()
+            return render_template('staffAddData.html', error2=error2, username=username, airplane=data1, posts=data2)
+        else:
+            insert = "INSERT INTO airplane VALUES(\'{}\', \'{}\', \'{}\')"
+            cursor.execute(insert.format(airline_name, airplane_id, seats))
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airline_staff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            conn.commit()
+            cursor.close()
+            message2 = "New airplane successfully added."
+            return render_template('staffAddData.html', message2=message2, username=username, airplane=data1, posts=data2)
+    
     else:
-		session.clear()
-		return render_template('404.html')
+        session.clear()
+        return render_template('404.html')
 
 # 5. Airline Staff Add Airport
 @app.route('/staff/addAirport', methods=['GET', 'POST'])
@@ -1076,8 +1084,8 @@ def StaffReports():
         return render_template('staffTicket.html', username=username, posts=array_1)
     
     else:
-		session.clear()
-		return render_template('404.html')
+        session.clear()
+        return render_template('404.html')
 
 # 9. Airline Staff Revenue Comparison
 # Draw a pie chart for showing total amount of revenue earned from direct sales 
@@ -1086,72 +1094,75 @@ def StaffReports():
 # booking agents) in the last month and last year
 @app.route('/staff/revenue')
 def staffRevenue():
-	if session.get('username'):
-		username = check_injection(session['username'])
-
-		cursor = conn.cursor()
-		query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
-		cursor.execute(query.format(db_username))
-		data2 = cursor.fetchall()
-
-		query3 = """
+    if session.get('username'):
+        username = check_injection(session['username'])
+        
+        cursor = conn.cursor()
+        query = "SELECT username, airline_name FROM airline_staff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        data2 = cursor.fetchall()
+        
+        query3 = """
             SELECT SUM(price)\
             FROM purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff \
             WHERE username = \'{}\' AND booking_agent_id IS NULL \
                 AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 30 \
             GROUP BY airline_name
             """
-		cursor.execute(query3.format(username))
-		mdirect = cursor.fetchall()
-		if(mdirect):
-			mdirect = [int(mdirect[0][0])]
-		else:
-			mdirect = [0]
-
-		query4 = "SELECT sum(price)\
-		FROM purchases NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff\
-		WHERE username = \'{}\' AND booking_agent_id is NOT NULL AND datediff(CURDATE(), DATE(purchase_date)) < 30\
-		GROUP BY airline_name"
-		
-		cursor.execute(query4.format(username))
-		# cursor.execute(query1)
-		mindirect = cursor.fetchall()
-		if(mindirect):
-			mindirect = [int(mindirect[0][0])]
-		else:
-			mindirect = [0]
-
-		query5 = "SELECT sum(price)\
-		FROM purchases NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff\
-		WHERE username = \'{}\' AND booking_agent_id is NULL AND datediff(CURDATE(), DATE(purchase_date)) < 365\
-		GROUP BY airline_name"
-		
-		cursor.execute(query5.format(username))
-		ydirect = cursor.fetchall()
-		if(ydirect):
-			ydirect = [int(ydirect[0][0])]
-		else:
-			ydirect = [0]
-
-		query6 = """
+        cursor.execute(query3.format(username))
+        mdirect = cursor.fetchall()
+        if mdirect:
+            mdirect = [int(mdirect[0][0])]
+        else:
+            mdirect = [0]
+            
+        query4 = """
+            SELECT SUM(price)\
+            FROM purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff \
+            WHERE username = \'{}\' AND booking_agent_id IS NOT NULL \
+                AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 30 \
+            GROUP BY airline_name
+            """
+        cursor.execute(query4.format(username))
+        mindirect = cursor.fetchall()
+        if(mindirect):
+            mindirect = [int(mindirect[0][0])]
+        else:
+            mindirect = [0]
+        
+        query5 = """
+            SELECT SUM(price) \
+            FROM purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff \
+            WHERE username = \'{}\' AND booking_agent_id IS NULL \
+                AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365\
+            GROUP BY airline_name
+            """
+        cursor.execute(query5.format(username))
+        ydirect = cursor.fetchall()
+        if(ydirect):
+            ydirect = [int(ydirect[0][0])]
+        else:
+            ydirect = [0]
+        
+        query6 = """
             SELECT SUM(price)\
             FROM purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airline_staff \
             WHERE username = \'{}\' AND booking_agent_id IS NOT NULL \
                 AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
             GROUP BY airline_name
             """
-		cursor.execute(query6.format(username))
-		yindirect = cursor.fetchall()
-		if(yindirect):
-			yindirect = [int(yindirect[0][0])]
-		else:
-			yindirect = [0]
-		cursor.close()
-		return render_template('staffRevenue.html', username = username, mdirect = mdirect, mindirect = mindirect, ydirect = ydirect, yindirect = yindirect, posts = data2)
-	
+        cursor.execute(query6.format(username))
+        yindirect = cursor.fetchall()
+        if yindirect:
+            yindirect = [int(yindirect[0][0])]
+        else:
+            yindirect = [0]
+        cursor.close()
+        return render_template('staffRevenue.html', username=username, \
+            mdirect=mdirect, mindirect=mindirect, ydirect=ydirect, yindirect=yindirect, posts=data2)
     else:
-		session.clear()
-		return render_template('404.html')
+        session.clear()
+        return render_template('404.html')
 
 # 10. Airline Staff View Top Destinations 
 # Find the top 3 most popular destinations for last 3 months and last year.
