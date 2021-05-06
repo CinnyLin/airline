@@ -4,6 +4,7 @@
 #   also what is its purpose if we are already identifying them uniquely through email?
 # 12. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
+# 13. html not linking to CSS even when i provide correct relative path (only login.html working)
 
 ### FIXES ###
 # 1. login, register should be one page with three views (not three separate pages)
@@ -38,11 +39,10 @@ conn = mysql.connector.connect(host='localhost',
                                port=3306)
 
 
-# Define route for login
+# Define route for home page
 @app.route('/')
 def index():
-    return render_template('login.html')
-
+    return render_template('index.html') 
 
 # --------- Prevent SQL injection --------
 def check_injection(string_input):
@@ -64,7 +64,7 @@ def check_injection(string_input):
 # All users, whether logged in or not, can view this page
 
 # 1. Search flights based on source city/airport name, destination city/airport name, date.
-@app.route('/searchFlight', methods=['GET', 'POST'])
+@app.route('/search/searchFlight', methods=['GET', 'POST'])
 def searchFlight():
     departure_city = check_injection(request.form['departure_city'])
     departure_airport = check_injection(request.form['departure_airport'])
@@ -97,12 +97,12 @@ def searchFlight():
         return render_template('Home.html', error1=error)
 
 # 2. Search flights status based on flight number, arrival/departure date.
-@app.route('/searchFlightStatus', methods=['GET', 'POST'])
+@app.route('/search/searchStatus', methods=['GET', 'POST'])
 def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
     flight_num = check_injection(request.form['flight_num'])
-    arrival_date = request.form['arrival_date']
     departure_date = request.form['departure_date']
+    arrival_date = request.form['arrival_date']
 
     cursor = conn.cursor()
     query = """
@@ -261,9 +261,9 @@ def registerStaffAuth():
 
 
 # -------- Three Types of Users Login -----------
-# @app.route('/login')
-# def login():
-#     return render_template('login.html')
+@app.route('/login')
+def login():
+    return render_template('login.html')
 
 @app.route('/login/customer')
 def loginCustomer():

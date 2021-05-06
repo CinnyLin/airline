@@ -8,52 +8,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- favicons -->
-<link href="airline/static/images/apple-touch-icon.png" rel="icon" />
-<link href="airline/static/images/apple-touch-icon.png" rel="apple-touch-icon" />
+<link href="../static/images/favicon.png" rel="icon" />
+<link href="../static/images/apple-touch-icon.png" rel="apple-touch-icon" />
 
 <!-- fonts -->
 <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
 
 <!-- CSS -->
-<link rel="stylesheet" href="css/animate.css">
-<link rel="stylesheet" href="css/icomoon.css">
-<link rel="stylesheet" href="css/bootstrap.css">
-<link rel="stylesheet" href="css/superfish.css">
-<link rel="stylesheet" href="css/magnific-popup.css">
-<link rel="stylesheet" href="css/bootstrap-datepicker.min.css">
-<link rel="stylesheet" href="css/cs-select.css">
-<link rel="stylesheet" href="css/cs-skin-border.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" type="text/css" href="css/animate.css">
+<link rel="stylesheet" type="text/css" href="css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="css/superfish.css">
+<link rel="stylesheet" type="text/css" href="css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="css/style.css">
 
 <!-- modern JS -->
 <script src="js/modernizr-2.6.2.min.js"></script>
 </head>
 
 <body>
-{% with message = get_flashed_messages() %}
-	{% if not message %}
-		<a href="/login">Login</a>
-		<a href="/register">Register</a>
-	{% endif %}
-
-	{% if message %}
-		<a href="/logout">Logout</a>
-		<a href="/remove_account">Remove Account</a>
-		<p class="message">{{message}} You have {{num}} follower(s)</p> </br>
-		<a href="/tweets">View your tweets</a> </br>
-		<a href="/find_people">Find people to follow</a> </br>
-		<a href="/unfollow">Unfollow someone</a> </br>
-		<a href="/view_followed">View people you have followed</a> </br>
-		</br>
-
-        	<h4>15 most recent tweets from you and your followers </h4> </br>
-
-		{% for line in tweets%}
-	        	<p>{{line}}</p>
-	        	<hr>
-		{% endfor %}
-	{% endif %}
-{% endwith %}
+	<h2>Public</h2>
+	<h3>Search Flight</h3>
+	<form action="/search/searchFlight" method="POST">
+		<input type="text" name = "departure_city" placeholder="departure_city" required/> </br>
+		<input type="text" name = "departure_airport" placeholder="departure_airport" required/> </br>
+		<input type="text" name = "arrival_city" placeholder="arrival_city" required/> </br>
+		<input type="text" name = "arrival_airport" placeholder="arrival_airport" required/> </br>
+		<input type="date" name = "departure_date" placeholder="departure_date" required/> </br>
+		<input type="date" name = "arrival_date" placeholder="arrival_date" required/> </br>
+		<input type="submit" value = Search />
+		{% if error %}
+			<p class="error"><strong>Error:</strong> {{error}}</p>
+		{% endif %}
+	</form>
+	<br><br>
+	<h3>Search Flight Status</h3>
+	<form action="/search/searchStatus" method="POST">
+		<input type="text" name = "airline_name" placeholder="airline_name" required/> </br>
+		<input type="number" name = "flight_num" placeholder="flight_num" required/> </br>
+		<input type="date" name = "departure_date" placeholder="departure_date" required/> </br>
+		<input type="date" name = "arrival_date" placeholder="arrival_date" required/> </br>
+		<input type="submit" value = Search />
+		{% if error %}
+			<p class="error"><strong>Error:</strong> {{error}}</p>
+		{% endif %}
+	</form>
+	<br><br>
+	<h2>Users</h2>
+	<a href="/login"> Users Login</a>
 </body>
 
 </html>
