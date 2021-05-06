@@ -4,6 +4,8 @@
 #   also what is its purpose if we are already identifying them uniquely through email?
 # 12. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
+# 13. ideally after register you want to directly logged in; 
+#   not working so instead it would bring you back to home and prompt you to log in
 
 ### FIXES ###
 # 1. login, register should be one page with three views (not three separate pages)
@@ -187,7 +189,7 @@ def registerCustomerAuth():
             cursor.close()
         except:
             return render_template('registerCustomer.html', error='Failed to register customer.')
-        return redirect('/customer/home')
+        return redirect('/login/customer') #PROBLEM 13: ideally want to direct to customer/home
 
 # 2. Booking Agent Registration Authentication
 @app.route('/register/agent/auth', methods=['GET', 'POST'])
@@ -218,7 +220,7 @@ def registerAgentAuth():
             cursor.close()
         except:
             return render_template('registerAgent.html', error='Failed to register agent.')
-        return redirect('/agent/home')
+        return redirect('/login/agent')
 
 # 3. Airline Staff Registration Authentication
 @app.route('/register/staff/auth', methods=['GET', 'POST'])
@@ -254,7 +256,7 @@ def registerStaffAuth():
         except:
             return render_template('registerStaff.html', error='Airline does not exist.')
             # airlineStaff has airline_name being foreign key when register so would fail if airline does not exist
-        return redirect('/staff/home')
+        return redirect('/login/staff')
 
 
 # -------- Three Types of Users Login -----------
