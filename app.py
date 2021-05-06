@@ -1,13 +1,29 @@
 ### REQUIREMENTS ### (delete when complete)
-# 10. enforce constraints: e.g. customer can't create new flights
-# 11. booking_agent_id is it something the fill in when register or something we assign, 
+# 1. Customer: View My Flights 
+# 2. Customer: Purchase Tickets
+# 3. Customer: Search for Flights
+# 4. Customer: Track My Spending
+# 5. Agent: View My Flights
+# 6. Agent: Purchase Tickets
+# 7. Agent: Search for Flights
+# 8. Agent: View My Commission
+# 9. Agent: View Top Customers
+# 10. Staff: View My Flights
+# 11. Staff: Create New Flights
+# 12. Staff: Change Flight Status
+# 13. Staff: Add Airplane
+# 14. Staff: Add Airport
+# 15. Staff: View Booking Agents
+# 16. Staff: View Frequent Customers
+# 17. Staff: View Reports
+# 18. Staff: Compare Revenue
+# 19. Staff: View Top Destination 
+# 20. enforce constraints: e.g. customer can't create new flights
+# 21. booking_agent_id is it something the fill in when register or something we assign, 
 #   also what is its purpose if we are already identifying them uniquely through email?
-# 12. both agent and customer puts in email and password to login, 
+# 22. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
-# 13. html not linking to CSS even when i provide correct relative path (only login.html working)
-
-### FIXES ###
-# 1. login, register should be one page with three views (not three separate pages)
+# 23. html not linking to CSS even when i provide correct relative path (only login.html working)
 
 ### ADDITIONAL FEATURES ###
 # 1. choose to book one-way or round-trip
@@ -15,6 +31,7 @@
 # 3. direct users to corresponding error pages/messages
 # 4. forget and reset password
 # 5. delete account
+# 6. login, register should be one page with three views (not three separate pages)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -374,8 +391,9 @@ def homeCustomer():
 
 # 2. Customer View Flights
 # Provide various ways for the user to see flights information they purchased. 
-# The default should show upcoming flights. Optionally, you may allow user to specify a
-# range of dates, specify destination and/or source airport name or city name etc.
+# The default should show upcoming flights. 
+# Optionally, you may allow user to specify a range of dates, 
+# specify destination and/or source airport name or city name etc.
 @app.route('/customer/searchTickets')
 def customerSearchTickets():
 	if session.get('email'):
