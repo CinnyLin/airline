@@ -5,7 +5,8 @@
 --
 
 INSERT INTO airline 
-VALUES ("China Eastern");
+VALUES ("Air Arabia"), ("Air Baltic"), ("Air China"), ("Air France"), ("American Airlines"), 
+("Cathay Pacific"), ("China Airlines"), ("China Eastern"), ("China Southern"), ("Delta"), ("EVA Air");
 
 -- --------------------------------------------------------
 
