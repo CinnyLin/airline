@@ -4,8 +4,6 @@
 #   also what is its purpose if we are already identifying them uniquely through email?
 # 12. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
-# 13. ideally after register you want to directly logged in; 
-#   not working so instead it would bring you back to home and prompt you to log in
 
 ### FIXES ###
 # 1. login, register should be one page with three views (not three separate pages)
@@ -189,7 +187,8 @@ def registerCustomerAuth():
             cursor.close()
         except:
             return render_template('registerCustomer.html', error='Failed to register customer.')
-        return redirect('/login/customer') #PROBLEM 13: ideally want to direct to customer/home
+        session['email'] = email
+        return redirect('/customer/home')
 
 # 2. Booking Agent Registration Authentication
 @app.route('/register/agent/auth', methods=['GET', 'POST'])
@@ -220,7 +219,8 @@ def registerAgentAuth():
             cursor.close()
         except:
             return render_template('registerAgent.html', error='Failed to register agent.')
-        return redirect('/login/agent')
+        session['email'] = email
+        return redirect('/agent/home')
 
 # 3. Airline Staff Registration Authentication
 @app.route('/register/staff/auth', methods=['GET', 'POST'])
@@ -256,7 +256,8 @@ def registerStaffAuth():
         except:
             return render_template('registerStaff.html', error='Airline does not exist.')
             # airlineStaff has airline_name being foreign key when register so would fail if airline does not exist
-        return redirect('/login/staff')
+        session['username'] = username
+        return redirect('/staff/home')
 
 
 # -------- Three Types of Users Login -----------
@@ -354,19 +355,19 @@ def logout():
 @app.route('/customer/home')
 def homeCustomer():
     if session.get('email'):
-        # email = check_injection(session['email'])
-        # cursor = conn.cursor()
-        # query = """
-        #     SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-        #     departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-        #     FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-        #     WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-        #     A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
-        # cursor.execute(query.format(email))
-        # data = cursor.fetchall() 
-        # cursor.close()
-        # return render_template('homeCustomer.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
-        return render_template('homeCustomer.html')
+        email = check_injection(session['email'])
+        cursor = conn.cursor()
+        query = """
+            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
+            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
+            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
+            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
+        cursor.execute(query.format(email))
+        data = cursor.fetchall() 
+        cursor.close()
+        return render_template('homeCustomer.html', email=email, 
+            emailName=email.split('@')[0], view_my_flights=data)
     else:
         session.clear()
         return render_template('404.html')
@@ -508,19 +509,19 @@ def trackSpending():
 @app.route('/agent/home')
 def homeAgent():
     if session.get('email'):
-        # email = check_injection(session['email'])
-        # cursor = conn.cursor()
-        # query = """
-        #     SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-        #     departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-        #     FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-        #     WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-        #     A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
-        # cursor.execute(query.format(email))
-        # data = cursor.fetchall() 
-        # cursor.close()
-        # return render_template('homeCustomer.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
-        return render_template('homeAgent.html')
+        email = check_injection(session['email'])
+        cursor = conn.cursor()
+        query = """
+            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
+            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
+            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
+            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
+        cursor.execute(query.format(email))
+        data = cursor.fetchall() 
+        cursor.close()
+        return render_template('homeCustomer.html', email=email, 
+        emailName=email.split('@')[0], view_my_flights=data)
     else:
         session.clear()
         return render_template('404.html')
@@ -707,19 +708,18 @@ def agentTopCustomers():
 @app.route('/staff/home')
 def homeStaff():
     if session.get('username'):
-        # email = check_injection(session['email'])
-        # cursor = conn.cursor()
-        # query = """
-        #     SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-        #     departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-        #     FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-        #     WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-        #     A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
-        # cursor.execute(query.format(email))
-        # data = cursor.fetchall() 
-        # cursor.close()
-        # return render_template('homeStaff.html', email=email, emailName=email.split('@')[0], view_my_flights=data)
-        return render_template('homeStaff.html')
+        username = check_injection(session['username'])
+        cursor = conn.cursor()
+        query = """
+            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
+            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
+            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
+            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
+        cursor.execute(query.format(username))
+        data = cursor.fetchall() 
+        cursor.close()
+        return render_template('homeStaff.html', username=username.split('@')[0], view_my_flights=data)
     else:
         session.clear()
         return render_template('404.html')
@@ -730,7 +730,7 @@ def homeStaff():
 # They will be able to see all the current/future/past flights operated by the airline they work for 
 # based on range of dates, source/destination airports/city etc. 
 # They will be able to see all the customers of a particular flight.
-@app.route('/staff/viewFlights', methods=['GET', 'POST'])
+@app.route('/staff/flight/viewFlight', methods=['GET', 'POST'])
 def staffViewFlights():
     if session.get('username'):
         airline = session['username'][1]
@@ -751,33 +751,33 @@ def staffViewFlights():
         return render_template('404.html')
     
 # 2. Airline Staff Change Flight Status
-# @app.route('/staff/editFlightStatus', methods=['GET', 'POST'])
-# def editFlightStatus():
-# 	if session.get('username'):
-# 		username = check_injection(session['username'])
-# 		status = request.form['edit_status']
-# 		flight_num = request.form['flight_num']
-		
-# 		cursor = conn.cursor()
-# 		update = "UPDATE flight set status = \'{}\' WHERE flight_num = \'{}\'"
-# 		cursor.execute(update.format(status, flight_num))
-# 		conn.commit()
-
-# 		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
-# 		cursor.execute(query.format(username))
-# 		data = cursor.fetchall()
-#         cursor.close()
-
-# 		message = 'Flight status changed successfully.'
-# 		return render_template('staffFlight.html', username=username, message=message, posts=data)
-	
-#     else:
-# 		session.clear()
-# 		return render_template('404.html')
+@app.route('/staff/flight/editStatus', methods=['GET', 'POST'])
+def editFlightStatus():
+    if session.get('username'):
+        username = check_injection(session['username'])
+        status = request.form['edit_status']
+        flight_num = request.form['flight_num']
+        
+        cursor = conn.cursor()
+        update = "UPDATE flight set status = \'{}\' WHERE flight_num = \'{}\'"
+        cursor.execute(update.format(status, flight_num))
+        conn.commit()
+        
+        query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        data = cursor.fetchall()
+        cursor.close()
+        
+        message = 'Flight status changed successfully.'
+        return render_template('staffFlight.html', username=username, message=message, posts=data)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 3. Airline Staff Add New Flight
-@app.route('/staff/createFlight', methods=['GET', 'POST'])
-def createFlight():
+@app.route('/staff/flight/addFlight', methods=['GET', 'POST'])
+def addFlight():
 	if session.get('username'):
 		username = check_injection(session['username'])
 		flight_num = request.form['flight_num']
@@ -874,7 +874,7 @@ def createFlight():
 		return render_template('404.html')
 
 # 4. Airline Staff Add New Airplane
-@app.route('/staff/addAirplane', methods=['GET', 'POST'])
+@app.route('/staff/flight/addAirplane', methods=['GET', 'POST'])
 def addAirplane():
     if session.get('username'):
         username = check_injection(session['username'])
@@ -918,7 +918,7 @@ def addAirplane():
         return render_template('404.html')
 
 # 5. Airline Staff Add Airport
-@app.route('/staff/addAirport', methods=['GET', 'POST'])
+@app.route('/staff/flight/addAirplane', methods=['GET', 'POST'])
 def addAirport():
 	if session.get('username'):
 		username = check_injection(session['username'])
@@ -1015,7 +1015,7 @@ def staffAgent():
 
 # 7. Airline Staff View Frequent Customers
 # (1) Airline Staff will also be able to see the most frequent customer within the last year. 
-@app.route('/staff/topCustomer')
+@app.route('/staff/customer/topCustomers')
 def staffTopCustomer():
 	if session.get('username'):
 		username = check_injection(session['username'])
@@ -1043,7 +1043,7 @@ def staffTopCustomer():
 		return render_template('404.html')
 
 # (2) Airline Staff will be able to see a list of all flights a particular Customer has taken on that airline.
-@app.route('/staff/customerFlights', methods=['GET', 'POST'])
+@app.route('/staff/customer/flights', methods=['GET', 'POST'])
 def staffCustomerFlight():
 	if session.get('username'):
 		username = check_injection(session['username'])
@@ -1098,7 +1098,7 @@ def staffCustomerFlight():
 # Month-wise tickets sold in a bar chart.
 # PROBLEM: not sure how to write this one
 @app.route('/staff/reports', methods=['GET', 'POST'])
-def StaffReports():
+def staffReports():
     if session.get('username'):
         username = check_injection(session['username'])
         airline = session[username][1]
@@ -1222,8 +1222,8 @@ def staffRevenue():
 
 # 10. Airline Staff View Top Destinations 
 # Find the top 3 most popular destinations for last 3 months and last year.
-@app.route('/staff/topDestination')
-def staffTopDestination():
+@app.route('/staff/customer/topDestinations')
+def staffTopDestinations():
 	if session.get('username'):
 		username = check_injection(session['username'])
 
@@ -1263,6 +1263,7 @@ def staffTopDestination():
 		return render_template('404.html')
 
 
+# ------- Run app ----------
 app.secret_key = 'some key that you will never guess'
 # Run the app on localhost port 5000
 # debug = True -> you don't have to restart flask
