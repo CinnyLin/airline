@@ -1,35 +1,61 @@
+<!DOCTYPE html>
 <html>
+
 <head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Home</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="static/images/favicon.png" rel="icon" />
+<link href="static/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/animate.css">
+<link rel="stylesheet" href="css/icomoon.css">
+<link rel="stylesheet" href="css/bootstrap.css">
+<link rel="stylesheet" href="css/superfish.css">
+<link rel="stylesheet" href="css/magnific-popup.css">
+<link rel="stylesheet" href="css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="css/cs-select.css">
+<link rel="stylesheet" href="css/cs-skin-border.css">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- modern JS -->
+<script src="js/modernizr-2.6.2.min.js"></script>
 </head>
+
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="your post" required/> </br>
-	<input type="submit" value = Post />
-</form>
 
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-</style>
-
-<table>
-	<th>Time</th>
-	<th>Post</th>
-
-{% for line in posts %}
-	<tr>
-		<td>{{line[0]}}</td>
-		<td>{{line[1]}}</td>
-		
-	</tr>
-{% endfor %}
-</table>
-
-<a href="/logout">Logout</a>
-
+	<form action="/post" method="POST">
+		<h1>Welcome, {{emailName}}!</h1>
+	</form>
+	
+	<h2>Browse</h2>
+	<a href="/agent/home">Home</a>
+	<br><br>
+	<a href="/agent/searchTickets">Search Tickets</a>
+	<br><br>
+	<a href="/agent/viewTickets">View Tickets</a>
+	<br><br>
+	<a href="/agent/purchaseTickets">Purchase Tickets</a>
+	<br><br>
+	<a href="/agent/commission">View Commission</a>
+	<br><br>
+	<a href="/agent/topCustomers">View Top Customers</a>
+	
+	<br><br>
+	<h2>Account</h2>
+	<a href="/logout">Logout</a>
+	<br><br>
+	<a href="/remove_account">Remove Account</a> <!-- PROBLEM: need to write this -->
+	<br><br>
+	<a href="/reset_password">Reset Password</a> <!-- PROBLEM: need to write this -->
+	
 </body>
-
 
 </html>
