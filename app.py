@@ -11,8 +11,6 @@
 # 10. Staff: View My Flights
 # 11. Staff: Create New Flights
 # 12. Staff: Change Flight Status
-# 13. Staff: Add Airplane
-# 14. Staff: Add Airport
 # 15. Staff: View Booking Agents
 # 16. Staff: View Frequent Customers
 # 17. Staff: View Reports
@@ -26,12 +24,12 @@
 # 23. html not linking to CSS even when i provide correct relative path (only login.html working)
 
 ### ADDITIONAL FEATURES ###
-# 1. choose to book one-way or round-trip
-# 2. chatbot connects to booking agent to automatically book for you
-# 3. direct users to corresponding error pages/messages
 # 4. forget and reset password
 # 5. delete account
+# 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
+# 2. chatbot connects to booking agent to automatically book for you
+
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -87,8 +85,8 @@ def searchFlight():
     departure_airport = check_injection(request.form['departure_airport'])
     arrival_city = check_injection(request.form['arrival_city'])
     arrival_airport = check_injection(request.form['arrival_airport'])
-    departure_date = request.form['departure_date']
-    arrival_date = request.form['arrival_date']
+    departure_time = request.form['departure_time']
+    arrival_time = request.form['arrival_time']
 
     cursor = conn.cursor()
     query = """
@@ -103,7 +101,9 @@ def searchFlight():
             date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') \
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (departure_airport, departure_airport, arrival_airport, arrival_airport, departure_city, departure_city, arrival_city, arrival_city, departure_date, departure_date, arrival_date, arrival_date))
+    cursor.execute(query, (departure_airport, departure_airport, arrival_airport, arrival_airport, 
+                        departure_city, departure_city, arrival_city, arrival_city, 
+                        departure_time, departure_time, arrival_time, arrival_time))
     data = cursor.fetchall()
     cursor.close()
 
@@ -118,8 +118,8 @@ def searchFlight():
 def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
     flight_num = check_injection(request.form['flight_num'])
-    departure_date = request.form['departure_date']
-    arrival_date = request.form['arrival_date']
+    departure_time = request.form['departure_time']
+    arrival_time = request.form['arrival_time']
 
     cursor = conn.cursor()
     query = """
@@ -131,7 +131,9 @@ def searchFlightStatus():
             airline_name = if (\'{}\' = '', airline_name, \'{}\') \
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (flight_num, flight_num, arrival_date, arrival_date, departure_date, departure_date, airline_name, airline_name))
+    cursor.execute(query, (flight_num, flight_num, 
+            arrival_time, arrival_time, departure_time, departure_time, 
+            airline_name, airline_name))
     data = cursor.fetchall() 
     cursor.close()
     
@@ -767,7 +769,12 @@ def staffViewFlights():
     else:
         session.clear()
         return render_template('404.html')
-    
+
+# 2.-5. Airline Staff Edit Flight Data
+@app.route('/staff/flight/editFlightData', methods=['GET', 'POST'])
+def editFlightData():
+    return render_template('staffEditFlightData.html')
+
 # 2. Airline Staff Change Flight Status
 @app.route('/staff/flight/editStatus', methods=['GET', 'POST'])
 def editFlightStatus():
@@ -787,7 +794,7 @@ def editFlightStatus():
         cursor.close()
         
         message = 'Flight status changed successfully.'
-        return render_template('staffFlight.html', username=username, message=message, posts=data)
+        return render_template('staffEditFlightData.html', username=username, message=message, posts=data)
     
     else:
         session.clear()
@@ -796,100 +803,103 @@ def editFlightStatus():
 # 3. Airline Staff Add New Flight
 @app.route('/staff/flight/addFlight', methods=['GET', 'POST'])
 def addFlight():
-	if session.get('username'):
-		username = check_injection(session['username'])
-		flight_num = request.form['flight_num']
-		departure_airport = check_injection(request.form['departure_airport'])
-		departure_date = request.form['departure_date']
-		departure_time = request.form['departure_time']
-		arrival_airport = check_injection(request.form['arrival_airport'])
-		arrival_date = request.form['arrival_date']
-		arrival_time = request.form['arrival_time']
-		price = request.form['price']
-		number = request.form['number']
-		status = request.form['status']
-		airplane_id = request.form['airplane_id']
+    if session.get('username'):
+        username = check_injection(session['username'])
+        
+        flight_num = request.form['flight_num']
+        departure_airport = check_injection(request.form['departure_airport'])
+        departure_time = request.form['departure_time']
+        arrival_airport = check_injection(request.form['arrival_airport'])
+        arrival_time = request.form['arrival_time']
+        price = request.form['price']
+        seats = request.form['seats']
+        status = request.form['status']
+        airplane_id = request.form['airplane_id']
 
-		cursor = conn.cursor()
-		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
-		cursor.execute(query.format(username))
-		data2 = cursor.fetchall()
-
-		airline = "SELECT airline_name FROM airlineStaff WHERE username = \'{}\'"
-		cursor.execute(airline.format(username))
-
-		airline_name = cursor.fetchone()
-		airline_name = airline_name[0]
-
-		query = "SELECT airport_name FROM airport WHERE airport_name = \'{}\'"
-		cursor.execute(query.format(departure_airport))
-		data = cursor.fetchall()
-		error1 = None
-		if not (data):
-			error1 = "This departure airport doesn't exist."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			return render_template('staffAddData.html', error1=error1, username=username, airplane=data1, posts=data2)
-
-		query = "SELECT airport_name FROM airport WHERE airport_name = \'{}\'"
-		cursor.execute(query.format(arrival_airport))
-		data = cursor.fetchall()
-		error1 = None
-		if not (data):
-			error1 = "This arrival airport doesn't exist."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			return render_template('staffAddData.html', error1=error1, username=username, airplane=data1, posts=data2)
-
-		query = "SELECT airplane_id FROM airplane WHERE airline_name = \'{}\' and airplane_id = \'{}\'"
-		cursor.execute(query.format(airline_name, airplane_id))
-		data = cursor.fetchall()
-		error1 = None
-		if not (data):
-			error1 = "This airplane doesn't exist."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			return render_template('staffAddData.html', error1=error1, username=username, airplane=data1, posts=data2)
-
-		num = "SELECT seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\' and airplane_id = \'{}\'"
-		cursor.execute(num.format(username, airplane_id))
-		num = cursor.fetchone()
-		if int(number) > int(num[0]):
-			numerror = "There is not enough seats."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			return render_template('staffAddData.html', error1=numerror, username=username, airplane=data1, posts=data2)
-
-		query = "SELECT airline_name, flight_num FROM flight WHERE airline_name = \'{}\' and flight_num = \'{}\'"
-		cursor.execute(query.format(airline_name, flight_num))
-		data = cursor.fetchone()
-		error1 = None
-		
-		if(data):
-			error1 = "This flight already exists."
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			cursor.close()
-			return render_template('staffAddData.html', error1=error1, username=username, airplane=data1, posts=data2)		
-
-		else:
-			insert = "INSERT INTO flight VALUES(\'{}\', \'{}\', \'{}\', \'{},{}\', \'{}\', \'{}, {}\', \'{}\', \'{}\', \'{}\', \'{}\')"
-			cursor.execute(insert.format(airline_name, flight_num, departure_airport, departure_date, departure_time, arrival_airport, arrival_date, arrival_time, price, status, airplane_id, number))
-			conn.commit()
-			query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
-			cursor.execute(query.format(username))
-			data1 = cursor.fetchall()
-			cursor.close()
-			message1 = "New flight successfully added."
-			return render_template('staffAddData.html', message1=message1, username=username, airplane=data1, posts=data2)
-	else:
-		session.clear()
-		return render_template('404.html')
+        cursor = conn.cursor()
+        query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        data2 = cursor.fetchall()
+        
+        airline = "SELECT airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor.execute(airline.format(username))
+        airline_name = cursor.fetchone()
+        airline_name = airline_name[0]
+        
+        query = "SELECT airport_name FROM airport WHERE airport_name = \'{}\'"
+        cursor.execute(query.format(departure_airport))
+        data = cursor.fetchall()
+        error1 = None
+        
+        if not data:
+            error1 = "This departure airport doesn't exist."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)
+        
+        query = "SELECT airport_name FROM airport WHERE airport_name = \'{}\'"
+        cursor.execute(query.format(arrival_airport))
+        data = cursor.fetchall()
+        error1 = None
+        if not data:
+            error1 = "This arrival airport doesn't exist."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)
+            
+        query = "SELECT airplane_id FROM airplane WHERE airline_name = \'{}\' and airplane_id = \'{}\'"
+        cursor.execute(query.format(airline_name, airplane_id))
+        data = cursor.fetchall()
+        error1 = None
+        if not data:
+            error1 = "This airplane doesn't exist."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)
+        
+        num = "SELECT seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\' and airplane_id = \'{}\'"
+        cursor.execute(num.format(username, airplane_id))
+        num = cursor.fetchone()
+        if int(seats) > int(num[0]):
+            num_error = "There is not enough seats."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            return render_template('staffEditFlightData.html', error1=num_error, username=username, airplane=data1, posts=data2)
+        
+        query = "SELECT airline_name, flight_num FROM flight WHERE airline_name = \'{}\' and flight_num = \'{}\'"
+        cursor.execute(query.format(airline_name, flight_num))
+        data = cursor.fetchone()
+        error1 = None
+        if data:
+            error1 = "This flight already exists."
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            cursor.close()
+            return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)		
+        
+        else:
+            insert = "INSERT INTO flight VALUES(\'{}\', \'{}\', \'{}\', \'{}, {}\', \'{}\', \'{}, {}\', \'{}\', \'{}\', \'{}\', \'{}\')"
+            # PROBLEM: IndexError: Replacement index 9 out of range for positional args tuple
+            cursor.execute(insert.format(airline_name, flight_num, 
+                                        departure_airport, departure_time, 
+                                        arrival_airport, arrival_time, 
+                                        price, status, airplane_id, seats))
+            conn.commit()
+            query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
+            cursor.execute(query.format(username))
+            data1 = cursor.fetchall()
+            cursor.close()
+            message1 = "New flight successfully added."
+            return render_template('staffEditFlightData.html', message1=message1, username=username, airplane=data1, posts=data2)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 4. Airline Staff Add New Airplane
 @app.route('/staff/flight/addAirplane', methods=['GET', 'POST'])
@@ -919,7 +929,7 @@ def addAirplane():
             cursor.execute(query.format(username))
             data1 = cursor.fetchall()
             cursor.close()
-            return render_template('staffAddData.html', error2=error2, username=username, airplane=data1, posts=data2)
+            return render_template('staffEditFlightData.html', error2=error2, username=username, airplane=data1, posts=data2)
         else:
             insert = "INSERT INTO airplane VALUES(\'{}\', \'{}\', \'{}\')"
             cursor.execute(insert.format(airline_name, airplane_id, seats))
@@ -929,14 +939,14 @@ def addAirplane():
             conn.commit()
             cursor.close()
             message2 = "New airplane successfully added."
-            return render_template('staffAddData.html', message2=message2, username=username, airplane=data1, posts=data2)
+            return render_template('staffEditFlightData.html', message2=message2, username=username, airplane=data1, posts=data2)
     
     else:
         session.clear()
         return render_template('404.html')
 
 # 5. Airline Staff Add Airport
-@app.route('/staff/flight/addAirplane', methods=['GET', 'POST'])
+@app.route('/staff/flight/addAirport', methods=['GET', 'POST'])
 def addAirport():
 	if session.get('username'):
 		username = check_injection(session['username'])
@@ -950,15 +960,16 @@ def addAirport():
 
 		airport = "SELECT airport_name FROM airport WHERE airport_name = \'{}\'"
 		cursor.execute(airport.format(airport_name))
-		airportdata = cursor.fetchone()
+		airport_data = cursor.fetchone()
 		query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
 		cursor.execute(query.format(username))
 		data1 = cursor.fetchall()
 		cursor.close()
+
 		error3 = None
-		if airportdata:
+		if airport_data:
 			error3 = "This airport already exists."
-			return render_template('staffAddData.html', error3=error3, username=username, airplane=data1, posts=data2)
+			return render_template('staffEditFlightData.html', error3=error3, username=username, airplane=data1, posts=data2)
 
 		else:
 			cursor = conn.cursor()
@@ -967,7 +978,7 @@ def addAirport():
 			conn.commit()
 			cursor.close()
 			message3 = "New airport successfully added."
-			return render_template('staffAddData.html', message3=message3, username=username, airplane=data1, posts=data2)
+			return render_template('staffEditFlightData.html', message3=message3, username=username, airplane=data1, posts=data2)
 	else:
 		session.clear()
 		return render_template('404.html')
