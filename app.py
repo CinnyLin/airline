@@ -8,10 +8,8 @@
 # 7. Agent: Search for Flights
 # 8. Agent: View My Commission
 # 9. Agent: View Top Customers
-# 16. Staff: View Frequent Customers (have PROBLEM)
 # 17. Staff: View Reports
 # 18. Staff: Compare Revenue
-# 19. Staff: View Top Destination 
 # 20. enforce constraints: e.g. customer can't create new flights
 # 21. booking_agent_id is it something the fill in when register or something we assign, 
 #   also what is its purpose if we are already identifying them uniquely through email?
@@ -1319,7 +1317,7 @@ def staffTopDestinations():
 		month = cursor.fetchall()
 
 		query2 = """
-            SELECT airport_city, count(ticket_id) AS ticket \
+            SELECT airport_city, COUNT(ticket_id) AS ticket \
             FROM purchase NATURAL JOIN ticket NATURAL JOIN flight, airport \
             WHERE airport_name = arrival_airport \
                 AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365\
