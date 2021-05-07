@@ -102,6 +102,7 @@ CREATE TABLE `flight` (
   FOREIGN KEY(`airline_name`, `airplane_id`) REFERENCES `airplane`(`airline_name`, `airplane_id`),
   FOREIGN KEY(`departure_airport`) REFERENCES `airport`(`airport_name`),
   FOREIGN KEY(`arrival_airport`) REFERENCES `airport`(`airport_name`)
+  -- FOREIGN KEY(`num_tickets_left`) REFERENCES `airplane`(seats)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 

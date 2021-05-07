@@ -100,9 +100,9 @@ def searchFlight():
     data = cursor.fetchall()
     cursor.close()
 
-    if data: # has info
+    if data:
         return render_template('Home.html', upcoming_flights=data)
-    else: # no info
+    else:
         error = 'Sorry! We cannot find information about this flight.'
         return render_template('Home.html', error1=error)
 
@@ -146,6 +146,7 @@ def searchFlightStatus():
 # @app.route('/register')
 # def register():
 #     return render_template('register.html')
+
 @app.route('/register/customer')
 def registerCustomer():
     return render_template('registerCustomer.html')
@@ -540,7 +541,7 @@ def homeAgent():
         return render_template('404.html')
 
 # 1. Booking Agent View Purchased Tickets
-@app.route('/agent/viewTickets')
+@app.route('/agent/viewTickets', methods=['GET', 'POST'])
 def agentViewTicket():
 	if session.get('email'):
 		email = check_injection(session['email'])
@@ -549,9 +550,21 @@ def agentViewTicket():
 		session.clear()
 		return render_template('404.html')
 
+# 2.-3. Booking Agent Search Flight and Purchase Ticket
+@app.route('/agent/search&purchase', methods=['GET', 'POST'])
+def agentSearchPurchase():
+    if session.get('email'):
+        email = check_injection(session['email'])
+        cursor = conn.cursor()
+        query = "SELECT email FROM bookingAgent WHERE email = \'{}\'"
+        cursor.execute(query.format(email))
+        data = cursor.fetchall()
+        cursor.close()
+    return render_template('agentSearchFlight.html', posts=data)
+
 # 2. Booking Agent Purchase New Ticket
 @app.route('/agent/purchaseTickets', methods=['GET', 'POST'])
-def agentBuyTickets():
+def agentPurchaseTickets():
 	if session.get('email'):
 		email = check_injection(session['email'])
 		airline_name = check_injection(request.form.get("airline_name"))
@@ -577,7 +590,7 @@ def agentBuyTickets():
 		customer_data = cursor.fetchone()
 		cursor.close()
 
-		if not (customer_data):
+		if not customer_data:
 			customer_error = 'Your customer is not registered.'
 			return render_template('agentViewTicket.html', error2=customer_error)
 
@@ -590,7 +603,7 @@ def agentBuyTickets():
 		flight_data = cursor.fetchall()
 		cursor.close()
 
-		if not (flight_data):
+		if not flight_data:
 			ticket_error = 'No more tickets left.'
 			return render_template('agentViewTicket.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
 		else:
@@ -612,15 +625,61 @@ def agentBuyTickets():
 		session.clear()
 		return render_template('404.html')
 
-# 3. Booking Agent Search Tickets
-@app.route('/agent/searchTickets')
-def agentSearchTickets():
-	if session.get('email'):
-		email = session['email'] 
-		return render_template('agentSearchTicket.html', email=email, emailName=email.split('@')[0], )
-	else:
-		session.clear()
-		return render_template('404.html')
+# 3. Booking Agent Search Flights
+@app.route('/agent/searchFlights', methods=['GET', 'POST'])
+def agentSearchFlights():
+    if session.get('email'):
+        email = check_injection(session['email'])
+        departure_city = check_injection(request.form['departure_city'])
+        departure_airport = check_injection(request.form['departure_airport'])
+        departure_date = request.form['departure_date']
+        arrival_city = check_injection(request.form['arrival_city'])
+        arrival_airport = check_injection(request.form['arrival_airport'])
+        arrival_date = request.form['arrival_date']
+        
+        cursor = conn.cursor()
+        query = "SELECT email from bookingAgent where email = \'{}\'"
+        cursor.execute(query.format(email))
+        agent_data = cursor.fetchone()
+        cursor.close()
+        
+        if not agent_data:
+            agent_id_error = 'You are not a booking agent.'
+            return render_template('agentSearchFlight.html', error1=agent_id_error)
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT airplane_id, flight_num, 
+                Depart.airport_city, departure_airport, 
+                Arrive.airport_city, arrival_airport, 
+                departure_time, arrival_time, 
+                status, price, airline_name, num_tickets_left \
+            FROM airport AS Depart, flight, airport AS Arrive \
+            WHERE Depart.airport_city = if (\'{}\' = '',Depart.airport_city, \'{}\') AND \
+                Depart.airport_name = departure_airport AND \
+                departure_airport = if (\'{}\' = '', departure_airport, \'{}\') AND \
+                Arrive.airport_city = if (\'{}\' = '', Arrive.airport_city, \'{}\')AND \
+                Arrive.airport_name = arrival_airport AND \
+                arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
+                date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+            ORDER BY airline_name, flight_num
+            """
+        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
+                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
+                    departure_date, departure_date, arrival_date, arrival_date))
+        data = cursor.fetchall()
+        cursor.close()
+        
+        if data:
+            return render_template('agentSearchFlight.html', email=email, emailName=email.split('@')[0], upcoming_flights=data)
+        else:
+            error = 'Sorry! This flight is not in our database.'
+            return render_template('agentSearchFlight.html', email=email, emailName=email.split('@')[0], error1=error)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 4. Booking Agent View Commissions
 # Default view will be total amount of commission received in the past 30 days 

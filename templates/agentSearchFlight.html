@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Search Flight & Purchase Ticket</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="/images/favicon.png" rel="icon" />
+<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/css/animate.css">
+<link rel="stylesheet" type="text/css" href="/css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/css/superfish.css">
+<link rel="stylesheet" type="text/css" href="/css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<!-- modern JS -->
+<script src="js/modernizr-2.6.2.min.js"></script>
+</head>
+
+<body>
+	
+	<div class="main">
+		<h2>Search Flights & Purchase Tickets</h2>
+
+		<div style="text-align: center;">
+			<h3>Search Flights</h3>
+			<form action="/agent/searchFlights" method="POST">
+				<label>Departure City:</label>
+				<input type="text" name = "departure_city" placeholder="departure_city"/></br>
+				<label>Departure Airport:</label>
+				<input type="text" name = "departure_airport" placeholder="departure_airport"/></br>
+				<label>Departure Date:</label>
+				<input type="date" name = "departure_date" placeholder="departure_date" onfocus="(this.type='date')"  onblur="(this.type='text')"/></br>
+				<label >Arrival City:</label>
+				<input type="text" name = "arrival_city" placeholder="arrival_city"/></br>
+				<label>Arrival Airport:</label>
+				<input type="text" name = "arrival_airport" placeholder="arrival_airport"/></br>
+				<label>Arrival Date:</label>
+				<input type="date" name = "arrival_date" placeholder="arrival_date" onfocus="(this.type='date')"  onblur="(this.type='text')"/></br>
+				<button type="submit" class="btn btn-primary">Search</button>
+				{% if error1 %}
+					<p class="text-danger"><strong>Error:</strong>:</strong> {{error1}}</p>
+				{% endif %}
+			</form>
+
+			{% if upcoming_flights %}
+			</br>
+			<table class="table table-bordered table-sm">
+				<thead>
+					<th>airline name</th>
+					<th>flight num</th>
+					<th>airplane id</th>
+					<th>departure place</th>
+					<th>departure time</th>
+					<th>arrival place</th>
+					<th>arrival time</th>
+					<th>status</th>
+					<th>price</th>
+					<th># tickets left</th>
+				</thead>
+
+				<tbody>
+				{% for line in upcoming_flights %}
+					<tr>
+						<td>{{line[10]}}</td>
+						<td>{{line[1]}}</td>
+						<td>{{line[0]}}</td>
+						<td>{{line[2]}}, {{line[3]}}</td>
+						<td>{{line[6]}}</td>  
+						<td>{{line[4]}}, {{line[5]}}</td>
+						<td>{{line[7]}}</td> 
+						<td>{{line[8]}}</td>
+						<td>{{line[9]}}</td>
+						<td>{{line[11]}}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			{% endif %}
+
+		<hr>
+
+			<h3>Purchase Tickets</h3>
+			<form action="/agent/purchaseTickets" method="POST">
+				<label for="airline_name">Airline Name:</label>
+				<select name="airline_name" required>
+					<option value="" disabled>search fields required</option>
+					{% if upcoming_flights%}
+					{% for line in upcoming_flights %}
+					<option value="{{line[10]}}">{{line[10]}}</option>
+					{% endfor %}
+					{% endif %}
+				</select>
+				<label for="flight_num">Flight Number:</label>
+				<select name="flight_num" required>
+					<option value="" disabled>search fields required</option>
+					{% if upcoming_flights%}
+					{% for line in upcoming_flights %}
+					<option value="{{line[1]}}">{{line[1]}}</option>
+					{% endfor %}
+					{% endif %}
+				</select>
+
+				<label>Customer Email: </label>
+				<input type="email" name = "customer_email" placeholder="customer_email" maxlength="50" required/>
+				<button type="submit" class="btn btn-primary">Purchase</button>
+				{% if error2 %}
+				<p class="text-danger"><strong>Sorry!</strong> {{error2}}</p>
+				{% endif %}
+			  </form>
+
+			  {% if message %}
+			  <p class="text-success">{{message}}</p>
+			  {% endif %}
+		</div>
+	</div>
+
+	<h2>Account</h2>
+	<a href="/agent/home">Home</a> ||
+	<a href="/logout">Logout</a>
+
+</body>
+
+</html>
