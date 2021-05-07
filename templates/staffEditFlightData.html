@@ -30,6 +30,7 @@
 </head>
 
 <body>
+	<h2><strong>{{posts[0][1]}}</strong>'s Flight Data Edit</h2>
 	<h2>Edit Data</h2>
 	<h3>Edit Flight Status</h3>
 	<form action="/staff/flight/editStatus" method="POST">
@@ -45,6 +46,7 @@
 			<p class="text-success">{{message}}</p>
 		{% endif %}
 	</form>
+	<br><br>
 	<h2>Add Data</h2>
 	<h3>Add Flight</h3>
 	<form action="/staff/flight/addFlight" method="POST">
@@ -67,6 +69,7 @@
 			<p class="text-success">{{message1}}</p>
 		{% endif %}
 	</form>
+	<br><br>
 	<h3>Add Airplane</h3>
 	<form action="/staff/flight/addAirplane" method="POST">
 		<input type="number" name = "airplane_id" placeholder="airplane_id" required/> </br>
@@ -79,6 +82,7 @@
 			<p class="text-success">{{message2}}</p>
 		{% endif %}
 	</form>
+	<br><br>
 	<h3>Add Airport</h3>
 	<form action="/staff/flight/addAirport" method="POST">
 		<input type="text" name = "airport_name" placeholder="airport_name" required/> </br>
@@ -91,6 +95,7 @@
 			<p class="text-success">{{message3}}</p>
 		{% endif %}
 	</form>
+	<br><br>
 	<h2>Account</h2>
 	<a href="/staff/home">Home</a> ||
 	<a href="/logout">Logout</a>

@@ -1,35 +1,109 @@
+<!DOCTYPE html>
 <html>
+
 <head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Agent Commission</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="/images/favicon.png" rel="icon" />
+<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/css/animate.css">
+<link rel="stylesheet" type="text/css" href="/css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/css/superfish.css">
+<link rel="stylesheet" type="text/css" href="/css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<!-- modern JS -->
+<script src="js/modernizr-2.6.2.min.js"></script>
 </head>
+
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="your post" required/> </br>
-	<input type="submit" value = Post />
-</form>
+	
+	<div class="main">
+        <h2>{{emailName}}'s Commission</h2>
+        <form action="/agent/commission" method="POST">
+			<label for="duration">Data collected from </label>
+			<select name="duration" required>
+				{% if duration == "7" %}
+				<option value="7" selected="selected">last week</option>
+				{% else %}
+				<option value="7">last week</option>
+				{% endif %}
+				
+				{% if duration == "30" %}
+				<option value="30" selected="selected">last month</option>
+				{% else %}
+				<option value="30">last month</option>
+				{% endif %}
 
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-</style>
+				{% if duration == "91" %}
+				<option value="91" selected="selected">last quarter</option>
+				{% else %}
+				<option value="91">last quarter</option>
+				{% endif %}
 
-<table>
-	<th>Time</th>
-	<th>Post</th>
+				{% if duration == "365" %}
+				<option value="365" selected="selected">last year</option>
+				{% else %}
+				<option value="365">last year</option>
+				{% endif %}
 
-{% for line in posts %}
-	<tr>
-		<td>{{line[0]}}</td>
-		<td>{{line[1]}}</td>
-		
-	</tr>
-{% endfor %}
-</table>
+				{% if duration == "1825" %}
+				<option value="1825" selected="selected">last 5 years</option>
+				{% else %}
+				<option value="1825">last 5 years</option>
+				{% endif %}
 
-<a href="/logout">Logout</a>
+				{% if duration == "36500" %}
+				<option value="36500" selected="selected">all</option>
+				{% else %}
+				<option value="36500">all</option>
+				{% endif %}
+			</select>
+			<button type="submit" class="btn btn-primary">submit</button>
+		</form>
+
+		<table class="table table-bordered table-sm">
+			<thead>
+				<th>total commission</th>
+				<th>avg commission per ticket</th>
+				<th># tickets</th>
+			</thead>
+
+			<tbody>
+				<tr>
+					{% if total_commission %}
+					<td>{{total_commission}}</td>
+					{% else %}
+					<td>0</td>
+					{% endif %}
+					{% if avg_commission %}
+					<td>{{avg_commission}}</td>
+					{% else %}
+					<td>0</td>
+					{% endif %}
+					<td>{{num_ticket}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<h2>Account</h2>
+	<a href="/agent/home">Home</a> ||
+	<a href="/logout">Logout</a>
 
 </body>
-
 
 </html>

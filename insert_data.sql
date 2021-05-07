@@ -243,6 +243,6 @@ INSERT INTO ticket VALUES
 --
 
 -- INSERT INTO purchase VALUES 
--- (1, "customer@nyu.edu", 1, "agent@gmail.com","2021-05-30") --front-end test
+-- (1, "customer@nyu.edu", 1, "agent@gmail.com","2021-04-30") --front-end test
 INSERT INTO purchase (ticket_id, customer_email, purchase_date) VALUES 
-(2, "customer2@nyu.edu", "2021-05-30");
+(2, "customer2@nyu.edu", "2021-04-19");

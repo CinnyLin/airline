@@ -6,7 +6,6 @@
 # 5. Agent: View My Flights
 # 6. Agent: Purchase Tickets
 # 7. Agent: Search for Flights
-# 8. Agent: View My Commission 
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
 # 18. Staff: Compare Revenue (@zoexiao0516)
@@ -534,18 +533,17 @@ def homeAgent():
         cursor.execute(query.format(email))
         data = cursor.fetchall() 
         cursor.close()
-        return render_template('homeCustomer.html', email=email, 
+        return render_template('homeAgent.html', email=email, 
         emailName=email.split('@')[0], view_my_flights=data)
     else:
         session.clear()
         return render_template('404.html')
 
-
 # 1. Booking Agent View Purchased Tickets
 @app.route('/agent/viewTickets')
 def agentViewTicket():
-	if session.get('booking_agent_email'):
-		email = session['booking_agent_email'] 
+	if session.get('email'):
+		email = check_injection(session['email'])
 		return render_template('agentViewTicket.html', email=email, emailName=email.split('@')[0], )
 	else:
 		session.clear()
@@ -554,8 +552,8 @@ def agentViewTicket():
 # 2. Booking Agent Purchase New Ticket
 @app.route('/agent/purchaseTickets', methods=['GET', 'POST'])
 def agentBuyTickets():
-	if session.get('booking_agent_email'):
-		email = check_injection(session['booking_agent_email'])
+	if session.get('email'):
+		email = check_injection(session['email'])
 		airline_name = check_injection(request.form.get("airline_name"))
 		flight_num = request.form.get("flight_num")
 		customer_email = check_injection(request.form['customer_email'])
@@ -617,8 +615,8 @@ def agentBuyTickets():
 # 3. Booking Agent Search Tickets
 @app.route('/agent/searchTickets')
 def agentSearchTickets():
-	if session.get('booking_agent_email'):
-		email = session['booking_agent_email'] 
+	if session.get('email'):
+		email = session['email'] 
 		return render_template('agentSearchTicket.html', email=email, emailName=email.split('@')[0], )
 	else:
 		session.clear()
@@ -632,28 +630,33 @@ def agentSearchTickets():
 # commission received and total numbers of tickets sold.
 @app.route('/agent/commission', methods=['POST', 'GET'])
 def agentCommission():
-	if session.get('booking_agent_email'):
-		email = check_injection(session['booking_agent_email'])
-
-		cursor = conn.cursor()
-		duration = request.form.get("duration")
-		if duration is None:
-			duration = "30"
-		query = """
+    if session.get('email'):
+        email = check_injection(session['email'])
+        
+        cursor = conn.cursor()
+        duration = request.form.get("duration")
+        
+        if duration is None:
+            duration = "30"
+        
+        query = """
             SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
             FROM agent_commission 
             WHERE email = \'{}\' AND \
                 (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())"""
-		cursor.execute(query.format(email, duration))
-		commission_data = cursor.fetchone()
-		total_commission, avg_commission, count_ticket = commission_data
-		cursor.close()
-		return render_template('agentCommission.html', email=email, emailName=email.split('@')[0], \
-            total_commission=total_commission, avg_commission=avg_commission, \
-            count_ticket=count_ticket, duration=duration)
-	else:
-		session.clear()
-		return render_template('404.html')
+        
+        cursor.execute(query.format(email, duration))
+        commission_data = cursor.fetchone()
+        total_commission, avg_commission, num_ticket = commission_data
+        cursor.close()
+        
+        return render_template('agentCommission.html', email=email, emailName=email.split('@')[0],
+            total_commission=total_commission, avg_commission=avg_commission,
+            num_ticket=num_ticket, duration=duration)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 5. Booking Agent View Top Customers
 # Top 5 customers based on number of tickets bought from the booking agent in the past 6 months 
@@ -662,8 +665,8 @@ def agentCommission():
 # Show another bar chart showing each of these 5 customers in x-axis and amount commission received in y- axis.
 @app.route('/agent/topCustomers')
 def agentTopCustomers():
-	if session.get('booking_agent_email'):
-		email = check_injection(session['booking_agent_email'])
+	if session.get('email'):
+		email = check_injection(session['email'])
 
 		cursor = conn.cursor()
 		query = """
@@ -767,7 +770,14 @@ def staffViewFlights():
 # 2.-5. Airline Staff Edit Flight Data
 @app.route('/staff/flight/editFlightData', methods=['GET', 'POST'])
 def editFlightData():
-    return render_template('staffEditFlightData.html')
+    if session.get('username'):
+        username = check_injection(session['username'])
+        cursor = conn.cursor()
+        query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        data = cursor.fetchall()
+        cursor.close()
+    return render_template('staffEditFlightData.html', posts=data)
 
 # 2. Airline Staff Change Flight Status
 @app.route('/staff/flight/editStatus', methods=['GET', 'POST'])
