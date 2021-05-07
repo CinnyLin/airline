@@ -8,7 +8,6 @@
 # 7. Agent: Search for Flights
 # 8. Agent: View My Commission
 # 9. Agent: View Top Customers
-# 10. Staff: View My Flights
 # 15. Staff: View Booking Agents
 # 16. Staff: View Frequent Customers
 # 17. Staff: View Reports
@@ -751,19 +750,19 @@ def homeStaff():
 @app.route('/staff/flight/viewFlight', methods=['GET', 'POST'])
 def staffViewFlights():
     if session.get('username'):
-        airline = session['username'][1]
-        status = "Upcoming"
+        username = check_injection(session['username'])
+        
         cursor = conn.cursor()
         query = """
-            SELECT * FROM flight\
-            WHERE airline_name = %s  AND status = %s AND \
-                departure_time <= DATE_ADD(now(), INTERVAL 30 DAY)
+            SELECT username, airline_name, airplane_id, flight_num, \
+                departure_airport, arrival_airport, departure_time, arrival_time \
+            FROM flight NATURAL JOIN airlineStaff \
+            WHERE username = \'{}\' and status = 'upcoming' and DATEDIFF(CURDATE(), DATE(departure_time))<30 
             """
-        cursor.execute(query, (airline, status))
-        data = cursor.fetchall()
+        cursor.execute(query.format(username))
+        data1 = cursor.fetchall()
         cursor.close()
-        return render_template('staffViewFlight.html', data=data)
-    
+        return render_template('staffViewFlight.html', username=username, posts=data1)
     else:
         session.clear()
         return render_template('404.html')
@@ -984,7 +983,7 @@ def addAirport():
 # Top 5 booking agents based on number of tickets sales for the past month and past year. 
 # Top 5 booking agents based on the amount of commission received for the last year.
 @app.route('/staff/agents')
-def staffAgent():
+def staffTopAgent():
 	if session.get('username'):
 		username = check_injection(session['username'])
 		cursor = conn.cursor()
@@ -1034,7 +1033,7 @@ def staffAgent():
 		cursor.execute(query)
 		data = cursor.fetchall()
 		cursor.close()
-		return render_template('staffAgent.html', username=username, commission=data1, month=data2, year=data3, posts=data, adata=adata)
+		return render_template('staffTopAgent.html', username=username, commission=data1, month=data2, year=data3, posts=data, adata=adata)
 	else:
 		session.clear()
 		return render_template('404.html')
