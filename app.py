@@ -27,7 +27,7 @@
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
 # 2. chatbot connects to booking agent to automatically book for you
-
+# 7. can only search for available dates (dates without flights would be dimmed)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
