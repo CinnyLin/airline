@@ -6,10 +6,10 @@
 # 5. Agent: View My Flights
 # 6. Agent: Purchase Tickets
 # 7. Agent: Search for Flights
-# 8. Agent: View My Commission
-# 9. Agent: View Top Customers
-# 17. Staff: View Reports
-# 18. Staff: Compare Revenue
+# 8. Agent: View My Commission 
+# 9. Agent: View Top Customers (@zoexiao0516)
+# 17. Staff: View Reports (@zoexiao0516)
+# 18. Staff: Compare Revenue (@zoexiao0516)
 # 20. enforce constraints: e.g. customer can't create new flights
 # 21. booking_agent_id is it something the fill in when register or something we assign, 
 #   also what is its purpose if we are already identifying them uniquely through email?
@@ -684,7 +684,7 @@ def agentTopCustomers():
 		else:
 			customer1 = [ticket_data[i][0] for i in range(ticket_length)]
 			tickets = [ticket_data[i][1] for i in range(ticket_length)]
-			for i in range(5 - ticket_length):
+			for _ in range(5 - ticket_length):
 				customer1.append(' ')
 				tickets.append(0)
 		
@@ -707,7 +707,7 @@ def agentTopCustomers():
 		else:
 			customer2 = [commission_data[i][0] for i in range(commission_length)]
 			commissions = [int(commission_data[i][1]) for i in range(commission_length)]
-			for i in range(5 - ticket_length):
+			for _ in range(5 - ticket_length):
 				customer2.append(' ')
 				commissions.append(0)
 		return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0], \
