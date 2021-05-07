@@ -784,7 +784,7 @@ def editFlightStatus():
         flight_num = request.form['flight_num']
         
         cursor = conn.cursor()
-        update = "UPDATE flight set status = \'{}\' WHERE flight_num = \'{}\'"
+        update = "UPDATE flight SET status = \'{}\' WHERE flight_num = \'{}\'"
         cursor.execute(update.format(status, flight_num))
         conn.commit()
         
@@ -883,8 +883,7 @@ def addFlight():
             return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)		
         
         else:
-            insert = "INSERT INTO flight VALUES(\'{}\', \'{}\', \'{}\', \'{}, {}\', \'{}\', \'{}, {}\', \'{}\', \'{}\', \'{}\', \'{}\')"
-            # PROBLEM: IndexError: Replacement index 9 out of range for positional args tuple
+            insert = "INSERT INTO flight VALUES(\'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\', \'{}\')"
             cursor.execute(insert.format(airline_name, flight_num, 
                                         departure_airport, departure_time, 
                                         arrival_airport, arrival_time, 

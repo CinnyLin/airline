@@ -34,9 +34,9 @@
 	<h3>Edit Flight Status</h3>
 	<form action="/staff/flight/editStatus" method="POST">
 		<input type="text" name = "flight_num" placeholder="flight_no" required/> </br>
-		<input type="radio" id="upcoming" name="status" value="upcoming"><label for="upcoming">Upcoming</label>
-		<input type="radio" id="in-progress" name="status" value="in-progress"><label for="in-progress">In-Progress</label>
-		<input type="radio" id="delayed" name="status" value="delayed"><label for="delayed">Delayed</label></br>
+		<input type="radio" id="upcoming" name="edit_status" value="upcoming"><label for="upcoming">Upcoming</label>
+		<input type="radio" id="in-progress" name="edit_status" value="in-progress"><label for="in-progress">In-Progress</label>
+		<input type="radio" id="delayed" name="edit_status" value="delayed"><label for="delayed">Delayed</label></br>
 		<input type="submit" value = Edit />
 		{% if error %}
 			<p class="text-danger"><strong>Error:</strong> {{error}}</p>
