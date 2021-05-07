@@ -8,6 +8,7 @@
 # 7. Agent: Search for Flights
 # 8. Agent: View My Commission
 # 9. Agent: View Top Customers
+# 16. Staff: View Frequent Customers (have PROBLEM)
 # 17. Staff: View Reports
 # 18. Staff: Compare Revenue
 # 19. Staff: View Top Destination 
@@ -1037,14 +1038,9 @@ def staffTopAgent():
 		return render_template('404.html')
 
 # 7. Airline Staff View Frequent Customers
-@app.route('/staff/customer', methods=['GET', 'POST'])
-def staffCustomer():
-    return render_template('staffCustomer.html')
-
 # (1) Airline Staff will also be able to see the most frequent customer within the last year. 
-@app.route('/staff/customer/topCustomers')
+@app.route('/staff/customer', methods=['GET', 'POST'])
 def staffTopCustomer():
-    # PROBLEM: does not automatically show
 	if session.get('username'):
 		username = check_injection(session['username'])
 		cursor = conn.cursor()
