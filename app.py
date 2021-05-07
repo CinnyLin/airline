@@ -8,8 +8,6 @@
 # 7. Agent: Search for Flights
 # 8. Agent: View My Commission
 # 9. Agent: View Top Customers
-# 15. Staff: View Booking Agents
-# 16. Staff: View Frequent Customers
 # 17. Staff: View Reports
 # 18. Staff: Compare Revenue
 # 19. Staff: View Top Destination 
@@ -435,7 +433,7 @@ def customerPurchaseTicket():
 			new_ticket_id = int(ticket_id_data[0]) + 1
 			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
 			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
-			insert2 = "INSERT INTO purchases VALUES (\'{}\', \'{}\', NULL, CURDATE())"
+			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', NULL, CURDATE())"
 			cursor.execute(insert2.format(new_ticket_id, email))
 			conn.commit()
 			cursor.close()
@@ -567,11 +565,11 @@ def agentBuyTickets():
 		cursor = conn.cursor()
 		query = "SELECT booking_agent_id FROM bookingAgent where email = \'{}\'"
 		cursor.execute(query.format(email))
-		agent_data = cursor.fetchone()
-		booking_agent_id = agent_data[0]
+		agentData = cursor.fetchone()
+		booking_agent_id = agentData[0]
 		cursor.close()
 
-		if not (agent_data):
+		if not agentData:
 			agent_id_error = 'You are not a booking agent.'
 			return render_template('agentViewTicket.html', error2=agent_id_error)
 
@@ -607,7 +605,7 @@ def agentBuyTickets():
 			new_ticket_id = int(ticket_id_data[0]) + 1
 			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
 			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
-			insert2 = "INSERT INTO purchases VALUES (\'{}\', \'{}\', \'{}\', CURDATE())"
+			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', \'{}\', CURDATE())"
 			cursor.execute(insert2.format(new_ticket_id, customer_email, booking_agent_id))
 			conn.commit()
 			cursor.close()
@@ -990,7 +988,7 @@ def staffTopAgent():
 
 		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
 		cursor.execute(query.format(username))
-		adata = cursor.fetchall()
+		agentData = cursor.fetchall()
 
 		query1 = """
             SELECT email, booking_agent_id, SUM(price)*0.1 AS commission \
@@ -1007,7 +1005,7 @@ def staffTopAgent():
 
 		query2 = """
             SELECT bookingAgent.email, booking_agent_id, COUNT(ticket_id) AS ticket \
-            FROM bookingAgent NATURAL JOIN purchases NATURAL JOIN ticket AS T, airlineStaff \
+            FROM bookingAgent NATURAL JOIN purchase NATURAL JOIN ticket AS T, airlineStaff \
 			WHERE username = \'{}\' AND airlineStaff.airline_name = T.airline_name \
                 AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 30 \
 			GROUP BY email, booking_agent_id \
@@ -1019,7 +1017,7 @@ def staffTopAgent():
 
 		query3 = """
             SELECT email, booking_agent_id, COUNT(ticket_id) AS ticket \
-            FROM bookingAgent NATURAL JOIN purchases NATURAL JOIN ticket AS T, airlineStaff \
+            FROM bookingAgent NATURAL JOIN purchase NATURAL JOIN ticket AS T, airlineStaff \
 			WHERE username = \'{}\' and airlineStaff.airline_name = T.airline_name \
                 AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
 			GROUP BY email, booking_agent_id \
@@ -1033,15 +1031,20 @@ def staffTopAgent():
 		cursor.execute(query)
 		data = cursor.fetchall()
 		cursor.close()
-		return render_template('staffTopAgent.html', username=username, commission=data1, month=data2, year=data3, posts=data, adata=adata)
+		return render_template('staffAgent.html', username=username, commission=data1, month=data2, year=data3, posts=data, agentData=agentData)
 	else:
 		session.clear()
 		return render_template('404.html')
 
 # 7. Airline Staff View Frequent Customers
+@app.route('/staff/customer', methods=['GET', 'POST'])
+def staffCustomer():
+    return render_template('staffCustomer.html')
+
 # (1) Airline Staff will also be able to see the most frequent customer within the last year. 
 @app.route('/staff/customer/topCustomers')
 def staffTopCustomer():
+    # PROBLEM: does not automatically show
 	if session.get('username'):
 		username = check_injection(session['username'])
 		cursor = conn.cursor()
@@ -1052,23 +1055,21 @@ def staffTopCustomer():
 		query1 = """
             SELECT email, name, COUNT(ticket_id) AS ticket \
             FROM customer, purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airlineStaff \
-			WHERE email = customer_email AND username = \'{}\' \ 
-                AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
+			WHERE email = customer_email AND username = \'{}\' AND DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
 			GROUP BY email, name \
 			ORDER BY ticket \
             DESC LIMIT 1
             """
 		cursor.execute(query1.format(username))
-		# cursor.execute(query1)
 		data1 = cursor.fetchall()
 		cursor.close()
-		return render_template('staffTopCustomer.html', frequent=data1, username=username, cdata=data2)
+		return render_template('staffCustomer.html', frequent=data1, username=username, customerData=data2)
 	else:
 		session.clear()
 		return render_template('404.html')
 
 # (2) Airline Staff will be able to see a list of all flights a particular Customer has taken on that airline.
-@app.route('/staff/customer/flights', methods=['GET', 'POST'])
+@app.route('/staff/customer/customerFlights', methods=['GET', 'POST'])
 def staffCustomerFlight():
 	if session.get('username'):
 		username = check_injection(session['username'])
@@ -1077,7 +1078,7 @@ def staffCustomerFlight():
 		cursor = conn.cursor()
 		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
 		cursor.execute(query.format(username))
-		cdata = cursor.fetchall()
+		customerData = cursor.fetchall()
 
 		query2 = """
             SELECT DISTINCT airplane_id, flight_num, departure_airport, arrival_airport, \
@@ -1102,18 +1103,70 @@ def staffCustomerFlight():
 
 		error = None
 		if data2:
-			return render_template('staffCustomer.html', cusflight=data2, frequent=data1, username=username, cdata=cdata)
+			return render_template('staffCustomer.html', customerFlights=data2, frequent=data1, username=username, customerData=customerData)
 		else:
 			cursor = conn.cursor()
 			cus = "SELECT email FROM customer WHERE email = \'{}\'"
 			cursor.execute(cus.format(email))
 			cus = cursor.fetchone()
 			cursor.close()
-			if(cus):
+			if cus:
 				error = "This customer didn't take any flight from us."
 			else:
 				error = "This customer doesn't exist."
-			return render_template('staffCustomer.html', error=error, frequent=data1, username=username, cdata=cdata)
+			return render_template('staffCustomer.html', error=error, frequent=data1, username=username, customerData=customerData)
+	else:
+		session.clear()
+		return render_template('404.html')
+
+# (3) Airline Staff will be able to see a list of Customers a particular Flight has on that airline.
+@app.route('/staff/customer/flightCustomers', methods=['GET', 'POST'])
+def staffFlightCustomer():
+	if session.get('username'):
+		username = check_injection(session['username'])
+		flight_num = request.form['flight_num']
+
+		cursor = conn.cursor()
+		cursor = conn.cursor()
+		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+		cursor.execute(query.format(username))
+		customerData = cursor.fetchall()
+
+		query3 = """
+            SELECT DISTINCT email, name 
+            FROM customer, purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airlineStaff\
+            WHERE flight_num = \'{}\' and email = customer_email and username = \'{}\'
+            """
+		cursor.execute(query3.format(flight_num, username))
+		data3 = cursor.fetchall()
+
+		query1 = """
+            SELECT email, name, COUNT(ticket_id) AS ticket 
+            FROM customer, purchase NATURAL JOIN ticket NATURAL JOIN flight NATURAL JOIN airlineStaff \
+            WHERE email = customer_email AND username = \'{}\' and DATEDIFF(CURDATE(), DATE(purchase_date)) < 365\
+            GROUP BY email, name\
+            ORDER BY ticket DESC 
+            LIMIT 1
+            """
+		cursor.execute(query1.format(username))
+		data1 = cursor.fetchall()
+
+		cursor.close()
+		error3 = None
+		if data3:
+			return render_template('staffCustomer.html', flightCustomers = data3, frequent = data1, username = username, customerData = customerData)
+		else:
+			cursor = conn.cursor()
+			cus = "SELECT flight_num FROM flight NATURAL JOIN airline_staff WHERE flight_num = \'{}\'\
+				AND username = \'{}\'"
+			cursor.execute(cus.format(flight_num, username))
+			cus = cursor.fetchone()
+			cursor.close()
+			if(cus):
+				error3 = "This flight has no customers."
+			else:
+				error3 = 'No such flight exists.'
+			return render_template('staffCustomer.html', error3 = error3, frequent = data1, username = username, customerData = customerData)
 	else:
 		session.clear()
 		return render_template('404.html')
@@ -1132,7 +1185,7 @@ def staffReports():
 
         cursor = conn.cursor()
         query = """
-            SELECT COUNT(purchases.ticket_id), YEAR(purchase_date), MONTH(purchase_date) \
+            SELECT COUNT(purchase.ticket_id), YEAR(purchase_date), MONTH(purchase_date) \
             FROM purchase, flight, ticket \
             WHERE purchase.ticket_id = ticket.ticket_id AND ticket.airline_name = flight.airline_name \
                 AND ticket.flight_num = flight.flight_num AND flight.airline_name = '{}' \
@@ -1247,7 +1300,7 @@ def staffRevenue():
 
 # 10. Airline Staff View Top Destinations 
 # Find the top 3 most popular destinations for last 3 months and last year.
-@app.route('/staff/customer/topDestinations')
+@app.route('/staff/topDestinations')
 def staffTopDestinations():
 	if session.get('username'):
 		username = check_injection(session['username'])

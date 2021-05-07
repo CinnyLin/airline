@@ -232,8 +232,8 @@ INSERT INTO flight (airline_name, flight_num, departure_airport, departure_time,
 --
 
 INSERT INTO ticket VALUES
--- (1, "China Eastern", 54120) --front-end test
-(2, "EVA Air", 50100);
+-- (1, "EVA Air", 50100) --front-end test
+(2, "China Eastern", 54120);
 
 -- --------------------------------------------------------
 
