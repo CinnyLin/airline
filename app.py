@@ -9,8 +9,6 @@
 # 8. Agent: View My Commission
 # 9. Agent: View Top Customers
 # 10. Staff: View My Flights
-# 11. Staff: Create New Flights
-# 12. Staff: Change Flight Status
 # 15. Staff: View Booking Agents
 # 16. Staff: View Frequent Customers
 # 17. Staff: View Reports
