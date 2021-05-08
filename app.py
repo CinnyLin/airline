@@ -775,10 +775,23 @@ def agentSearchFlights():
 def agentCommission():
     if session.get('email'):
         email = check_injection(session['email'])
-        
-        cursor = conn.cursor()
         duration = request.form.get("duration")
-        
+
+        custom_duration = request.form.get("custom_duration")
+        if custom_duration is not None:
+            custom_duration = custom_duration
+        query = """
+            SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
+            FROM agent_commission 
+            WHERE email = \'{}\' AND \
+                (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())
+            """
+        cursor = conn.cursor()  
+        cursor.execute(query.format(email, custom_duration))
+        commission_data = cursor.fetchone()
+        total_commission, avg_commission, num_ticket = commission_data
+        cursor.close()
+
         if duration is None:
             duration = "30"
         
@@ -787,7 +800,7 @@ def agentCommission():
             FROM agent_commission 
             WHERE email = \'{}\' AND \
                 (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())"""
-        
+        cursor = conn.cursor()
         cursor.execute(query.format(email, duration))
         commission_data = cursor.fetchone()
         total_commission, avg_commission, num_ticket = commission_data
@@ -795,7 +808,7 @@ def agentCommission():
         
         return render_template('agentCommission.html', email=email, emailName=email.split('@')[0],
             total_commission=total_commission, avg_commission=avg_commission,
-            num_ticket=num_ticket, duration=duration)
+            num_ticket=num_ticket, duration=duration, custom_duration=custom_duration)
     
     else:
         session.clear()

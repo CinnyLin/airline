@@ -34,7 +34,7 @@
 	<div class="main">
         <h2>{{emailName}}'s Commission</h2>
         <form action="/agent/commission" method="POST">
-			<label for="duration">Data collected from </label>
+			<label for="duration">Accumulated commission amount since</label>
 			<select name="duration" required>
 				{% if duration == "7" %}
 				<option value="7" selected="selected">last week</option>
@@ -48,10 +48,10 @@
 				<option value="30">last month</option>
 				{% endif %}
 
-				{% if duration == "91" %}
-				<option value="91" selected="selected">last quarter</option>
+				{% if duration == "90" %}
+				<option value="90" selected="selected">last quarter</option>
 				{% else %}
-				<option value="91">last quarter</option>
+				<option value="90">last quarter</option>
 				{% endif %}
 
 				{% if duration == "365" %}
@@ -60,21 +60,29 @@
 				<option value="365">last year</option>
 				{% endif %}
 
-				{% if duration == "1825" %}
-				<option value="1825" selected="selected">last 5 years</option>
+				{% if duration == "1095" %}
+				<option value="1095" selected="selected">last 3 years</option>
 				{% else %}
-				<option value="1825">last 5 years</option>
+				<option value="1095">last 3 years</option>
 				{% endif %}
 
-				{% if duration == "36500" %}
-				<option value="36500" selected="selected">all</option>
+				{% if duration == "10000" %}
+				<option value="10000" selected="selected">all time</option>
 				{% else %}
-				<option value="36500">all</option>
+				<option value="10000">all time</option>
+				{% endif %}
+				
+				{% if duration == "custom_duration" %}
+				<option value={{custom_duration}}" selected="selected">custom duration</option>
+				{% else %}
+				<option value={{custom_duration}}>custom duration</option>
+				<input type="number" name = "custom_duration" placeholder="custom_duration"/>
 				{% endif %}
 			</select>
-			<button type="submit" class="btn btn-primary">submit</button>
+			<button type="submit" class="btn btn-primary">search</button>
 		</form>
 
+		<br>
 		<style>
 			table, td, th {
 				text-align: center;
