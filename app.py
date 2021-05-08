@@ -5,7 +5,6 @@
 # 4. Customer: Track My Spending
 # 5. Agent: View My Flights
 # 6. Agent: Purchase Tickets
-# 7. Agent: Search for Flights (PROBLEM: num_tickets_left)
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
 # 18. Staff: Compare Revenue (@zoexiao0516)
@@ -579,7 +578,6 @@ def agentPurchaseTickets():
 		agentData = cursor.fetchone()
 		booking_agent_id = agentData[0]
 		cursor.close()
-
 		if not agentData:
 			agent_id_error = 'You are not a booking agent.'
 			return render_template('agentSearchFlight.html', error2=agent_id_error)
@@ -590,7 +588,6 @@ def agentPurchaseTickets():
 		cursor.execute(query.format(customer_email))
 		customer_data = cursor.fetchone()
 		cursor.close()
-
 		if not customer_data:
 			customer_error = 'Your customer is not registered.'
 			return render_template('agentSearchFlight.html', error2=customer_error)
@@ -603,12 +600,10 @@ def agentPurchaseTickets():
 		cursor.execute(query.format(airline_name, flight_num))
 		flight_data = cursor.fetchall()
 		cursor.close()
-
 		if not flight_data:
 			ticket_error = 'No more tickets left.'
 			return render_template('agentSearchFlight.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
 		else:
-			cursor = conn.cursor()
 			cursor = conn.cursor()
 			query_id = "SELECT ticket_id FROM ticket ORDER BY ticket_id DESC LIMIT 1"
 			cursor.execute(query_id)
@@ -616,8 +611,8 @@ def agentPurchaseTickets():
 			new_ticket_id = int(ticket_id_data[0]) + 1
 			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
 			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
-			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', \'{}\', CURDATE())"
-			cursor.execute(insert2.format(new_ticket_id, customer_email, booking_agent_id))
+			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', \'{}\', \'{}\', CURDATE())"
+			cursor.execute(insert2.format(new_ticket_id, customer_email, booking_agent_id, email))
 			conn.commit()
 			cursor.close()
 			message = 'Ticket bought successfully!'
