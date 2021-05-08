@@ -3,8 +3,6 @@
 # (1) Search for upcoming flights based on source city/airport name, destination city/airport name, date.
 # (2) Check flight status based on flight number, arrival/departure date.
 # 1. Customer: View My Flights 
-# 2. Customer: Purchase Tickets
-# 3. Customer: Search for Flights
 # 4. Customer: Track My Spending
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
@@ -14,7 +12,6 @@
 #   also what is its purpose if we are already identifying them uniquely through email?
 # 22. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
-# 23. html not linking to CSS even when i provide correct relative path (only login.html working)
 
 ### ADDITIONAL FEATURES ###
 # 4. forget and reset password
@@ -24,6 +21,8 @@
 # 2. chatbot connects to booking agent to automatically book for you
 # 7. can only search for available dates (dates without flights would be dimmed)
 # 8. dark theme
+# 9. each user (customer, agent, staff) has their own path!
+# 10. after search results come out the search field keeps search input (UI)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -370,6 +369,7 @@ def logout():
 def homeCustomer():
     if session.get('email'):
         email = check_injection(session['email'])
+        
         cursor = conn.cursor()
         query = """
             SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
@@ -380,8 +380,16 @@ def homeCustomer():
         cursor.execute(query.format(email))
         data = cursor.fetchall() 
         cursor.close()
-        return render_template('homeCustomer.html', email=email, 
-            emailName=email.split('@')[0], view_my_flights=data)
+        
+        cursor = conn.cursor()
+        query2 = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query2.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
+        
+        return render_template('homeCustomer.html', email=email, username=username, view_my_flights=data)
+    
     else:
         session.clear()
         return render_template('404.html')
@@ -400,51 +408,117 @@ def customerSearchTickets():
 		session.clear()
 		return render_template('404.html')
 
-# 3. Customer Purchase Tickets
-# Customer chooses a flight and purchase ticket for this flight. 
-# PROBLEM: Implement this along with a use case to search for flights.
-@app.route('/customer/purchase', methods=['GET', 'POST'])
+# 3. Customer Search Flights and Purchase Tickets
+@app.route('/customer/search&purchase', methods=['GET', 'POST'])
+def customerSearchPurchase():
+    if session.get('email'):
+        email = check_injection(session['email'])
+        cursor = conn.cursor()
+        query = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
+    return render_template('customerSearchFlight.html', username=username)
+
+# (1) Customer Search Flights
+@app.route('/customer/searchFlights', methods=['GET', 'POST'])
+def customerSearchFlights():
+    if session.get('email'):
+        email = check_injection(session['email'])
+        departure_city = check_injection(request.form['departure_city'])
+        departure_airport = check_injection(request.form['departure_airport'])
+        departure_date = request.form['departure_date']
+        arrival_city = check_injection(request.form['arrival_city'])
+        arrival_airport = check_injection(request.form['arrival_airport'])
+        arrival_date = request.form['arrival_date']
+        
+        cursor = conn.cursor()
+        query = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT airplane_id, flight_num, 
+                Depart.airport_city, departure_airport, 
+                Arrive.airport_city, arrival_airport, 
+                departure_time, arrival_time, 
+                status, price, airline_name, num_tickets_left \
+            FROM airport AS Depart, flight, airport AS Arrive \
+            WHERE Depart.airport_city = if (\'{}\' = '',Depart.airport_city, \'{}\') AND \
+                Depart.airport_name = departure_airport AND \
+                departure_airport = if (\'{}\' = '', departure_airport, \'{}\') AND \
+                Arrive.airport_city = if (\'{}\' = '', Arrive.airport_city, \'{}\')AND \
+                Arrive.airport_name = arrival_airport AND \
+                arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
+                date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+            ORDER BY airline_name, flight_num
+            """
+        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
+                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
+                    departure_date, departure_date, arrival_date, arrival_date))
+        data = cursor.fetchall()
+        cursor.close()
+        
+        if data:
+            return render_template('customerSearchFlight.html', email=email, username=username, upcoming_flights=data)
+        else:
+            error = 'Sorry! This flight is not in our database.'
+            return render_template('customerSearchFlight.html', email=email, username=username, error1=error)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# (2) Customer Purchase New Tickets
+@app.route('/customer/purchaseTickets', methods=['GET', 'POST'])
 def customerPurchaseTicket():
-	if session.get('email'):
-		email = check_injection(session['email'])
-		airline_name = check_injection(request.form['airline_name'])
-		flight_num = request.form['flight_num']
-
-		cursor = conn.cursor()
-		query = """
-            SELECT ticket_id \
-            FROM flight NATURAL JOIN ticket \
-            WHERE flight_num = \'{}\' AND ticket_id NOT IN \
-                (SELECT ticket_id \
-                FROM flight NATURAL JOIN ticket NATURAL JOIN purchase)\
-            AND flight_num = \'{}\'"""
-		cursor.execute(query.format(airline_name, flight_num))
-		data = cursor.fetchall()
-		cursor.close()
-
-		if(data):
-			cursor = conn.cursor()
-			query_id = "SELECT ticket_id \
-						FROM ticket \
-						ORDER BY ticket_id DESC \
-						LIMIT 1"
-			cursor.execute(query_id)
-			ticket_id_data = cursor.fetchone() # (74373,)
-			new_ticket_id = int(ticket_id_data[0]) + 1
-			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
-			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
-			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', NULL, CURDATE())"
-			cursor.execute(insert2.format(new_ticket_id, email))
-			conn.commit()
-			cursor.close()
-			message1 = 'Ticket bought successfully!'
-			return render_template('customerPurchaseTicket.html', email=email, message1=message1)
-		else:
-			error = 'No ticket found.'
-			return render_template('customerPurchaseTicket.html', error2=error, email=email, emailName=email.split('@')[0])
-	else:
-		session.clear()
-		return render_template('404.html')
+    if session.get('email'):
+        email = check_injection(session['email'])
+        airline_name = check_injection(request.form['airline_name'])
+        flight_num = request.form['flight_num']
+        
+        cursor = conn.cursor()
+        query = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
+        
+        cursor = conn.cursor()
+        query2 = """
+            SELECT * FROM flight \
+            WHERE airline_name = \'{}\' AND flight_num = \'{}\' AND num_tickets_left > 0"""
+        cursor.execute(query2.format(airline_name, flight_num))
+        flight_data = cursor.fetchall()
+        cursor.close()
+    
+        if flight_data:
+            cursor = conn.cursor()
+            query_id = "SELECT ticket_id FROM ticket ORDER BY ticket_id DESC LIMIT 1"
+            cursor.execute(query_id)
+            ticket_id_data = cursor.fetchone()
+            new_ticket_id = int(ticket_id_data[0]) + 1
+            insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
+            cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
+            insert2 = "INSERT INTO purchase (ticket_id, customer_email, purchase_date) \
+                        VALUES (\'{}\', \'{}\', CURDATE())"
+            cursor.execute(insert2.format(new_ticket_id, email))
+            conn.commit()
+            cursor.close()
+            message = 'Ticket bought successfully!'
+            return render_template('customerSearchFlight.html', email=email, username=username, message=message)
+        else:
+            ticket_error = 'No more tickets left.'
+            return render_template('customerSearchFlight.html', error2=ticket_error, email=email, username=username)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 4. Customer Track Spending
 # Default view will be total amount of money spent in the past year 
@@ -569,61 +643,62 @@ def agentSearchPurchase():
 # 2. Booking Agent Purchase New Ticket
 @app.route('/agent/purchaseTickets', methods=['GET', 'POST'])
 def agentPurchaseTickets():
-	if session.get('email'):
-		email = check_injection(session['email'])
-		airline_name = check_injection(request.form.get("airline_name"))
-		flight_num = request.form.get("flight_num")
-		customer_email = check_injection(request.form['customer_email'])
+    if session.get('email'):
+        email = check_injection(session['email'])
+        airline_name = check_injection(request.form.get("airline_name"))
+        flight_num = request.form.get("flight_num")
+        customer_email = check_injection(request.form['customer_email'])
 
 		# validate booking agent email
-		cursor = conn.cursor()
-		query = "SELECT booking_agent_id FROM bookingAgent where email = \'{}\'"
-		cursor.execute(query.format(email))
-		agentData = cursor.fetchone()
-		booking_agent_id = agentData[0]
-		cursor.close()
-		if not agentData:
-			agent_id_error = 'You are not a booking agent.'
-			return render_template('agentSearchFlight.html', error2=agent_id_error)
+        cursor = conn.cursor()
+        query = "SELECT booking_agent_id FROM bookingAgent where email = \'{}\'"
+        cursor.execute(query.format(email))
+        agentData = cursor.fetchone()
+        booking_agent_id = agentData[0]
+        cursor.close()
+        if not agentData:
+            agent_id_error = 'You are not a booking agent.'
+            return render_template('agentSearchFlight.html', error2=agent_id_error)
 
 		# validate customer_email is registered
-		cursor = conn.cursor()
-		query = "SELECT * FROM customer WHERE email = \'{}\'"
-		cursor.execute(query.format(customer_email))
-		customer_data = cursor.fetchone()
-		cursor.close()
-		if not customer_data:
-			customer_error = 'Your customer is not registered.'
-			return render_template('agentSearchFlight.html', error2=customer_error)
+        cursor = conn.cursor()
+        query2 = "SELECT * FROM customer WHERE email = \'{}\'"
+        cursor.execute(query2.format(customer_email))
+        customer_data = cursor.fetchone()
+        cursor.close()
+        if not customer_data:
+            customer_error = 'Your customer is not registered.'
+            return render_template('agentSearchFlight.html', error2=customer_error)
 
-		# customer_email is validated	
-		cursor = conn.cursor()
-		query = """
+		# customer_email is validated
+        cursor = conn.cursor()
+        query3 = """
             SELECT * FROM flight \
             WHERE airline_name = \'{}\' AND flight_num = \'{}\' AND num_tickets_left > 0"""
-		cursor.execute(query.format(airline_name, flight_num))
-		flight_data = cursor.fetchall()
-		cursor.close()
-		if not flight_data:
-			ticket_error = 'No more tickets left.'
-			return render_template('agentSearchFlight.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
-		else:
-			cursor = conn.cursor()
-			query_id = "SELECT ticket_id FROM ticket ORDER BY ticket_id DESC LIMIT 1"
-			cursor.execute(query_id)
-			ticket_id_data = cursor.fetchone()
-			new_ticket_id = int(ticket_id_data[0]) + 1
-			insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
-			cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
-			insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', \'{}\', \'{}\', CURDATE())"
-			cursor.execute(insert2.format(new_ticket_id, customer_email, booking_agent_id, email))
-			conn.commit()
-			cursor.close()
-			message = 'Ticket bought successfully!'
-			return render_template('agentSearchFlight.html', message=message, email=email, emailName=email.split('@')[0])
-	else:
-		session.clear()
-		return render_template('404.html')
+        cursor.execute(query3.format(airline_name, flight_num))
+        flight_data = cursor.fetchall()
+        cursor.close()
+        if not flight_data:
+            ticket_error = 'No more tickets left.'
+            return render_template('agentSearchFlight.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
+        else:
+            cursor = conn.cursor()
+            query4 = "SELECT ticket_id FROM ticket ORDER BY ticket_id DESC LIMIT 1"
+            cursor.execute(query4)
+            ticket_id_data = cursor.fetchone()
+            new_ticket_id = int(ticket_id_data[0]) + 1
+            insert1 = "INSERT INTO ticket VALUES (\'{}\', \'{}\', \'{}\')"
+            cursor.execute(insert1.format(new_ticket_id, airline_name, flight_num))
+            insert2 = "INSERT INTO purchase VALUES (\'{}\', \'{}\', \'{}\', \'{}\', CURDATE())"
+            cursor.execute(insert2.format(new_ticket_id, customer_email, booking_agent_id, email))
+            conn.commit()
+            cursor.close()
+            message = 'Ticket bought successfully!'
+            return render_template('agentSearchFlight.html', message=message, email=email, emailName=email.split('@')[0])
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 3. Booking Agent Search Flights
 @app.route('/agent/searchFlights', methods=['GET', 'POST'])
