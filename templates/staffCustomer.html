@@ -39,97 +39,101 @@
             <h2>View Customers</h2>
         {% endif %}
         
-        <div style="text-align: center;"></div>
-            <h3 style="text-align: center;">Most Frequent Customer Last Year</h3>
-            <table class="table table-bordered table-sm">
-                <th>customer email</th>
-                <th>customer name</th>
-                <th># tickets bought</th>
+        <style>
+            table, td, th {
+                text-align: center;
+            }
+        </style>
+        <h3 style="text-align: center;">Most Frequent Customer Last Year</h3>
+        <table class="table table-bordered table-sm">
+            <th>customer email</th>
+            <th>customer name</th>
+            <th># tickets bought</th>
 
-            {% for line in frequent %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>	
-                    <td>{{line[2]}}</td>
-                </tr>
-            {% endfor %}
-            </table>
+        {% for line in frequent %}		
+            <tr>
+                <td>{{line[0]}}</td>
+                <td>{{line[1]}}</td>	
+                <td>{{line[2]}}</td>
+            </tr>
+        {% endfor %}
+        </table>
 
-            <div style="text-align: center;">
-                <h3>Flights Bought by This Customer</h3>
-                <form action="/staff/customer/customerFlights" method="POST">
-                    <label>Customer email:</label>
-                    <input type="email" name = "customer_email" placeholder="customer_email" maxlength="50" required/> </br>
-                    <button type="submit" class="btn btn-primary">Search</button></br>
-                    </br>
-                    {% if error %}
-                    <p class="text-danger"><strong>Sorry:</strong> {{error}}</p>
-                    {% endif %}
-                </form>
-
-                {% if customerFlights %}
-                <table class="table table-bordered table-sm">
-                    <thead>
-                        <th>airplane id</th>
-                        <th>flight num</th>
-                        <th>departure airport</th>
-                        <th>arrival airport</th>
-                        <th>departure time</th>
-                        <th>arrival time</th>
-                        <th>status</th>
-                    </thead>
-
-                    <tbody>
-                    {% for line in customerFlights %}
-                        <tr>
-                            <td>{{line[0]}}</td>
-                            <td>{{line[1]}}</td>
-                            <td>{{line[2]}}</td>
-                            <td>{{line[3]}}</td>
-                            <td>{{line[4]}}</td>
-                            <td>{{line[5]}}</td>
-                            <td>{{line[6]}}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                {% endif %}
-            </div>
-
-            <div style="text-align: center;">
-                <h3>All Customers on This Flight</h3>
-                <form action="/staff/customer/flightCustomers" method="POST">
-                    <label>Flight number:</label>
-                    <input name="flight_num" 
-                        oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" 
-                        type = "number" placeholder="flight_num" 
-                        maxlength = "9" 
-                        required/></br>
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    {% if error3 %}
-                    <p class="text-danger"><strong>Sorry:</strong> {{error3}}</p>
-                    {% endif %}
-                </form>
-
-                {% if flightCustomers %}
+        <div style="text-align: center;">
+            <h3>Flights Bought by This Customer</h3>
+            <form action="/staff/customer/customerFlights" method="POST">
+                <label>Customer email:</label>
+                <input type="email" name = "customer_email" placeholder="customer_email" maxlength="50" required/> </br>
+                <button type="submit" class="btn btn-primary">Search</button></br>
                 </br>
-                <table class="table table-bordered table-sm">
-                    <thead>
-                        <th>email</th>
-                        <th>name</th>
-                    </thead>
-
-                    <tbody>
-                    {% for line in flightCustomers %}
-                        <tr>
-                            <td>{{line[0]}}</td>
-                            <td>{{line[1]}}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                {% if error %}
+                <p class="text-danger"><strong>Sorry:</strong> {{error}}</p>
                 {% endif %}
-            </div>
+            </form>
+
+            {% if customerFlights %}
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <th>airplane id</th>
+                    <th>flight num</th>
+                    <th>departure airport</th>
+                    <th>arrival airport</th>
+                    <th>departure time</th>
+                    <th>arrival time</th>
+                    <th>status</th>
+                </thead>
+
+                <tbody>
+                {% for line in customerFlights %}
+                    <tr>
+                        <td>{{line[0]}}</td>
+                        <td>{{line[1]}}</td>
+                        <td>{{line[2]}}</td>
+                        <td>{{line[3]}}</td>
+                        <td>{{line[4]}}</td>
+                        <td>{{line[5]}}</td>
+                        <td>{{line[6]}}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center;">
+            <h3>All Customers on This Flight</h3>
+            <form action="/staff/customer/flightCustomers" method="POST">
+                <label>Flight number:</label>
+                <input name="flight_num" 
+                    oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" 
+                    type = "number" placeholder="flight_num" 
+                    maxlength = "9" 
+                    required/></br>
+                <button type="submit" class="btn btn-primary">Search</button>
+                {% if error3 %}
+                <p class="text-danger"><strong>Sorry:</strong> {{error3}}</p>
+                {% endif %}
+            </form>
+
+            {% if flightCustomers %}
+            </br>
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <th>email</th>
+                    <th>name</th>
+                </thead>
+
+                <tbody>
+                {% for line in flightCustomers %}
+                    <tr>
+                        <td>{{line[0]}}</td>
+                        <td>{{line[1]}}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
 	</div>
 
 	<h2>Account</h2>

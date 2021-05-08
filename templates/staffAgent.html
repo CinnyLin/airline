@@ -38,66 +38,69 @@
         {% else %}
             <h2>View Booking Agents</h2>
         {% endif %}
-        
-        <div style="text-align: center;">
 
-            <h3 style="text-align: center;">Top 5 Agents on Amount of Commission Last Year</h3>
-            <table class="table table-bordered table-sm">
-                <th>email</th>
-                <th>booking agent id</th>
-                <th>commission amount</th>
+        <style>
+            table, td, th {
+                text-align: center;
+            }
+        </style>
+        <h3  style="text-align: center;">Top 5 Agents on Amount of Commission Last Year</h3>
+        <table class="table table-bordered table-sm">
+            <th>email</th>
+            <th>booking agent id</th>
+            <th>commission amount</th>
 
-            {% for line in commission %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>	
-                    <td>{{line[2]}}</td>
-                </tr>
-            {% endfor %}
-            </table>
+        {% for line in commission %}		
+            <tr>
+                <td>{{line[0]}}</td>
+                <td>{{line[1]}}</td>	
+                <td>{{line[2]}}</td>
+            </tr>
+        {% endfor %}
+        </table>
 
-            <h3 style="text-align: center;">Top 5 Agents on Number of Tickets Last Month</h3>
-            <table class="table table-bordered table-sm">
-                <th>email</th>
-                <th>booking agent id</th>
-                <th># tickets sold</th>
+        <h3  style="text-align: center;">Top 5 Agents on Number of Tickets Last Month</h3>
+        <table class="table table-bordered table-sm">
+            <th>email</th>
+            <th>booking agent id</th>
+            <th># tickets sold</th>
 
-            {% for line in month %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>
-                    <td>{{line[2]}}</td>	
-                </tr>
-            {% endfor %}
-            </table>
+        {% for line in month %}		
+            <tr>
+                <td>{{line[0]}}</td>
+                <td>{{line[1]}}</td>
+                <td>{{line[2]}}</td>	
+            </tr>
+        {% endfor %}
+        </table>
 
-            <h3 style="text-align: center;">Top 5 Agents on Number of Tickets Last Year</h3>
-            <table class="table table-bordered table-sm">
-                <th>email</th>
-                <th>booking agent id</th>
-                <th># tickets sold</th>
+        <h3  style="text-align: center;">Top 5 Agents on Number of Tickets Last Year</h3>
+        <table class="table table-bordered table-sm">
+            <th>email</th>
+            <th>booking agent id</th>
+            <th># tickets sold</th>
 
-            {% for line in year %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>	
-                    <td>{{line[2]}}</td>
-                </tr>
-            {% endfor %}
-            </table>
+        {% for line in year %}		
+            <tr>
+                <td>{{line[0]}}</td>
+                <td>{{line[1]}}</td>	
+                <td>{{line[2]}}</td>
+            </tr>
+        {% endfor %}
+        </table>
 
-            <h3 style="text-align: center;">All Agents</h3>
-            <table class="table table-bordered table-sm">
-                <th>email</th>
-                <th>booking agent id</th>
+        <h3  style="text-align: center;">All Agents</h3>
+        <table class="table table-bordered table-sm">
+            <th>email</th>
+            <th>booking agent id</th>
 
-            {% for line in posts %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>	
-                </tr>
-            {% endfor %}
-            </table>
+        {% for line in posts %}		
+            <tr>
+                <td>{{line[0]}}</td>
+                <td>{{line[1]}}</td>	
+            </tr>
+        {% endfor %}
+        </table>
 	</div>
 
 	<h2>Account</h2>

@@ -35,10 +35,16 @@
 		<h2>View Purchased Tickets</h2>
 		<h4>My booking_agent_id: {{booking_agent_id[0]}}</h4>
 		
+		<br>
 		{% if view_my_flights %}
-		</br>
+		<style>
+			table, td, th {
+				text-align: center;
+			}
+		</style>
         <table class="table table-bordered table-sm">
-            <thead>
+
+			<thead>
 				<th>ticket id</th>
 				<th>customer email</th>
 				<th>purchase date</th>
