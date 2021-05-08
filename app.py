@@ -1,15 +1,12 @@
 ### REQUIREMENTS ### (delete when complete)
 # 0. Public Functions: 
 # (1) Search for upcoming flights based on source city/airport name, destination city/airport name, date.
-# (2) Check flight status based on flight number, arrival/departure date.
-# 1. Customer: View My Flights 
-# 4. Customer: Track My Spending
+# (2) Check flight status based on flight number, arrival/departure date. 
+# 4. Customer: Track My Spending (@zoexiao0516)
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
 # 18. Staff: Compare Revenue (@zoexiao0516)
 # 20. enforce constraints: e.g. customer can't create new flights
-# 21. booking_agent_id is it something the fill in when register or something we assign, 
-#   also what is its purpose if we are already identifying them uniquely through email?
 # 22. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
 
@@ -23,6 +20,7 @@
 # 8. dark theme
 # 9. each user (customer, agent, staff) has their own path!
 # 10. after search results come out the search field keeps search input (UI)
+# 11. fix button and put account stuff to top right (index.html)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -72,69 +70,81 @@ def check_injection(string_input):
 # All users, whether logged in or not, can view this page
 
 # 1. Search flights based on source city/airport name, destination city/airport name, date.
-@app.route('/search/searchFlight', methods=['GET', 'POST'])
+@app.route('/search/flight', methods=['GET', 'POST'])
 def searchFlight():
     departure_city = check_injection(request.form['departure_city'])
     departure_airport = check_injection(request.form['departure_airport'])
+    departure_time = request.form['departure_time']
     arrival_city = check_injection(request.form['arrival_city'])
     arrival_airport = check_injection(request.form['arrival_airport'])
-    departure_time = request.form['departure_time']
     arrival_time = request.form['arrival_time']
+    airline_name = request.form['airline_name']
+    price = request.form['price']
 
     cursor = conn.cursor()
     query = """
-        SELECT * \
-        FROM Flight, Airport \
+        SELECT airline_name, flight_num, 
+                departure_airport, Depart.airport_city, departure_time,
+                arrival_airport, Arrive.airport_city, arrival_time, 
+                status, price, num_tickets_left \
+        FROM flight, airport AS Depart, airport AS Arrive \
         WHERE departure_airport = if (\'{}\' = '', departure_airport, \'{}\') AND \
-            arrival_airport = if (\'{}\' = '', arrival_airport, \'{}\') AND \
-            status = 'upcoming' AND \
-            departure_city = if (\'{}\' = '', departure_city, \'{}\') AND \
-            arrival_city = if (\'{}\' = '', arrival_city, \'{}\') AND \
+            Depart.airport_city = if (\'{}\' = '', Depart.airport_city, \'{}\') AND \
+            Depart.airport_name = departure_airport AND \
             date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') \
+            arrival_airport = if (\'{}\' = '', arrival_airport, \'{}\') AND \
+            Arrive.airport_city = if (\'{}\' = '', Arrive.airport_city, \'{}\') AND \
+            Arrive.airport_name = arrival_airport AND \
+            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+            airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+            price <= if (\'{}\' = '', price, \'{}\') AND \
+            status = 'upcoming'
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (departure_airport, departure_airport, arrival_airport, arrival_airport, 
-                        departure_city, departure_city, arrival_city, arrival_city, 
-                        departure_time, departure_time, arrival_time, arrival_time))
+    cursor.execute(query.format(
+        departure_airport, departure_airport, departure_city, departure_city, departure_time, departure_time,
+        arrival_airport, arrival_airport, arrival_city, arrival_city, arrival_time, arrival_time,
+        airline_name, airline_name, price, price))
     data = cursor.fetchall()
     cursor.close()
 
     if data:
-        return render_template('Home.html', upcoming_flights=data)
+        return render_template('publicSearchFlights.html', upcoming_flights=data)
     else:
-        error = 'Sorry! We cannot find information about this flight.'
-        return render_template('Home.html', error1=error)
+        error = 'Sorry! This flight is not in our database.'
+        return render_template('index.html', error1=error)
 
 # 2. Search flights status based on flight number, arrival/departure date.
-@app.route('/search/searchStatus', methods=['GET', 'POST'])
+@app.route('/search/flightStatus', methods=['GET', 'POST'])
 def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
     flight_num = check_injection(request.form['flight_num'])
-    departure_time = request.form['departure_time']
-    arrival_time = request.form['arrival_time']
+    ticket_id = check_injection(request.form['ticket_id'])
 
     cursor = conn.cursor()
+    
     query = """
-        SELECT * \
-		FROM Flight \
-		WHERE flight_num = if (\'{}\' = '', flight_num, \'{}\') AND \
-            date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') AND \
-            airline_name = if (\'{}\' = '', airline_name, \'{}\') \
+        SELECT ticket_id, airline_name, flight_num, status,
+            departure_airport, Depart.airport_city, departure_time,
+            arrival_airport, Arrive.airport_city, arrival_time \
+		FROM flight NATURAL JOIN ticket, airport AS Depart, airport AS Arrive \
+		WHERE Depart.airport_name = departure_airport AND \
+            Arrive.airport_name = arrival_airport AND \
+            flight_num = if (\'{}\' = '', flight_num, \'{}\') AND \
+            airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+            ticket_id = if (\'{}\' = '', ticket_id, \'{}\') \
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (flight_num, flight_num, 
-            arrival_time, arrival_time, departure_time, departure_time, 
-            airline_name, airline_name))
+    cursor.execute(query.format(
+        flight_num, flight_num, airline_name, airline_name, ticket_id, ticket_id))
     data = cursor.fetchall() 
     cursor.close()
     
-    if data: # has info
-        return render_template('Home.html', statuses=data)
-    else: # no info
+    if data:
+        return render_template('publicSearchFlightStatus.html', flight_statuses=data)
+    else:
         error = 'Sorry! We cannot find information about this flight.'
-        return render_template('Home.html', error2=error)
+        return render_template('index.html', error2=error)
 
 
 # -------- Three Types of Registration -----------
@@ -437,11 +447,13 @@ def customerSearchFlights():
         email = check_injection(session['email'])
         departure_city = check_injection(request.form['departure_city'])
         departure_airport = check_injection(request.form['departure_airport'])
-        departure_date = request.form['departure_date']
+        departure_time = request.form['departure_time']
         arrival_city = check_injection(request.form['arrival_city'])
         arrival_airport = check_injection(request.form['arrival_airport'])
-        arrival_date = request.form['arrival_date']
-        
+        arrival_time = request.form['arrival_time']
+        airline_name = request.form['airline_name']
+        price = request.form['price']
+
         cursor = conn.cursor()
         query = "SELECT name FROM customer WHERE email = \'{}\'"
         cursor.execute(query.format(email))
@@ -464,12 +476,16 @@ def customerSearchFlights():
                 Arrive.airport_name = arrival_airport AND \
                 arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
                 date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+                airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+                price <= if (\'{}\' = '', price, \'{}\') \
             ORDER BY airline_name, flight_num
             """
-        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
-                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
-                    departure_date, departure_date, arrival_date, arrival_date))
+        cursor.execute(query.format(
+            departure_city, departure_city, departure_airport, departure_airport, 
+            arrival_city, arrival_city, arrival_airport, arrival_airport, 
+            departure_time, departure_time, arrival_time, arrival_time,
+            airline_name, airline_name, price, price))
         data = cursor.fetchall()
         cursor.close()
         
@@ -716,10 +732,12 @@ def agentSearchFlights():
         email = check_injection(session['email'])
         departure_city = check_injection(request.form['departure_city'])
         departure_airport = check_injection(request.form['departure_airport'])
-        departure_date = request.form['departure_date']
+        departure_time = request.form['departure_time']
         arrival_city = check_injection(request.form['arrival_city'])
         arrival_airport = check_injection(request.form['arrival_airport'])
-        arrival_date = request.form['arrival_date']
+        arrival_time = request.form['arrival_time']
+        airline_name = request.form['airline_name']
+        price = request.form['price']
         
         cursor = conn.cursor()
         query = "SELECT email from bookingAgent where email = \'{}\'"
@@ -746,12 +764,16 @@ def agentSearchFlights():
                 Arrive.airport_name = arrival_airport AND \
                 arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
                 date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+                airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+                price <= if (\'{}\' = '', price, \'{}\')
             ORDER BY airline_name, flight_num
             """
-        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
-                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
-                    departure_date, departure_date, arrival_date, arrival_date))
+        cursor.execute(query.format(
+            departure_city, departure_city, departure_airport, departure_airport, 
+            arrival_city, arrival_city, arrival_airport, arrival_airport, 
+            departure_time, departure_time, arrival_time, arrival_time,
+            airline_name, airline_name, price, price))
         data = cursor.fetchall()
         cursor.close()
         
@@ -777,20 +799,20 @@ def agentCommission():
         email = check_injection(session['email'])
         duration = request.form.get("duration")
 
-        custom_duration = request.form.get("custom_duration")
-        if custom_duration is not None:
-            custom_duration = custom_duration
-        query = """
-            SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
-            FROM agent_commission 
-            WHERE email = \'{}\' AND \
-                (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())
-            """
-        cursor = conn.cursor()  
-        cursor.execute(query.format(email, custom_duration))
-        commission_data = cursor.fetchone()
-        total_commission, avg_commission, num_ticket = commission_data
-        cursor.close()
+        # custom_duration = request.form.get("custom_duration")
+        # if custom_duration is not None:
+        #     custom_duration = custom_duration
+        # query = """
+        #     SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
+        #     FROM agent_commission 
+        #     WHERE email = \'{}\' AND \
+        #         (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())
+        #     """
+        # cursor = conn.cursor()  
+        # cursor.execute(query.format(email, custom_duration))
+        # commission_data = cursor.fetchone()
+        # total_commission, avg_commission, num_ticket = commission_data
+        # cursor.close()
 
         if duration is None:
             duration = "30"
@@ -808,7 +830,7 @@ def agentCommission():
         
         return render_template('agentCommission.html', email=email, emailName=email.split('@')[0],
             total_commission=total_commission, avg_commission=avg_commission,
-            num_ticket=num_ticket, duration=duration, custom_duration=custom_duration)
+            num_ticket=num_ticket, duration=duration)#, custom_duration=custom_duration)
     
     else:
         session.clear()

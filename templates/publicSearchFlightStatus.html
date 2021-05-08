@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Search Flight Status</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="/images/favicon.png" rel="icon" />
+<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/css/animate.css">
+<link rel="stylesheet" type="text/css" href="/css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/css/superfish.css">
+<link rel="stylesheet" type="text/css" href="/css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<!-- modern JS -->
+<script src="/js/modernizr-2.6.2.min.js"></script>
+</head>
+
+<body>
+    <div class='top-nav'>
+		<nav>
+			<div style="text-align: right;">
+                <a href="/">Home</a> || 
+				<a href="/login">Users Login</a>
+			</div>
+		</nav>
+	</div>
+
+    <div class="main">
+        <h2>Search Flight Status</h2>
+		<form action="/search/flightStatus" method="POST">
+			<input type="text" name = "airline_name" placeholder="airline_name"/>
+			<input type="number" name = "flight_num" placeholder="flight_num"/>
+			<input type="number" name = "ticket_id" placeholder="ticket_id (optional)"/>
+			<button type="submit" class="btn btn-primary">Search</button>
+			{% if error %}
+				<p class="error"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+
+        <br>
+			{% if flight_statuses %}
+			<style>
+				table, td, th {
+					text-align: center;;
+				}
+			</style>
+
+			<table class="table table-bordered table-sm">
+				<thead>
+                    <th>ticket id</th>
+					<th>airline name</th>
+					<th>flight num</th>
+					<th>status</th>
+                    <th>departure place</th>
+					<th>departure time</th>
+					<th>arrival place</th>
+					<th>arrival time</th>
+				</thead>
+
+				<tbody>
+				{% for line in flight_statuses %}
+					<tr>
+						<td>{{line[0]}}</td>
+						<td>{{line[1]}}</td>
+						<td>{{line[2]}}</td>
+                        <td>{{line[3]}}</td>
+                        <td>{{line[4]}}, {{line[5]}}</td>
+						<td>{{line[6]}}</td> 
+						<td>{{line[7]}}, {{line[8]}}</td> 
+						<td>{{line[9]}}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			{% endif %}
+
+    </div>
+	
+</body>
+
+</html>

@@ -38,26 +38,23 @@
 		<div style="text-align: center;">
 			<h3>Search Flights</h3>
 			<form action="/customer/searchFlights" method="POST">
-				<label>Departure City:</label>
-				<input type="text" name = "departure_city" placeholder="departure_city"/>
-				<label>Departure Airport:</label>
-				<input type="text" name = "departure_airport" placeholder="departure_airport"/>
-				<label>Departure Date:</label>
-				<input type="date" name = "departure_date" placeholder="departure_date" 
-						onfocus="(this.type='date')"  onblur="(this.type='text')"/>
-				<br><br>
-				<label >Arrival City:</label>
-				<input type="text" name = "arrival_city" placeholder="arrival_city"/>
-				<label>Arrival Airport:</label>
-				<input type="text" name = "arrival_airport" placeholder="arrival_airport"/>
-				<label>Arrival Date:</label>
-				<input type="date" name = "arrival_date" placeholder="arrival_date" 
-						onfocus="(this.type='date')"  onblur="(this.type='text')"/>
-				<br><br>
-				<button type="submit" class="btn btn-primary">Search</button>
-				{% if error1 %}
-					<p class="text-danger"><strong>Error:</strong>:</strong> {{error1}}</p>
-				{% endif %}
+				<label>Depart:</label>
+            <input type="text" name = "departure_city" placeholder="departure_city"/>
+            <input type="text" name = "departure_airport" placeholder="departure_airport"/>
+            <input type="date" name = "departure_time" placeholder="departure_time"/>
+            <br>
+            <label>Arrive:</label>
+            <input type="text" name = "arrival_city" placeholder="arrival_city"/>
+            <input type="text" name = "arrival_airport" placeholder="arrival_airport"/>
+            <input type="date" name = "arrival_time" placeholder="arrival_time"/> 
+            <br>
+            <label>Additional Filter:</label>
+            <input type="text" name = "airline_name" placeholder="airline_name"/>
+            <input type="text" name = "price" placeholder="max_price"/> 
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if error1 %}
+                <p class="error"><strong>Error:</strong> {{error1}}</p>
+            {% endif %}
 			</form>
 
 			<br>

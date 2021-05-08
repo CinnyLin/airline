@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Search Flight & Purchase Ticket</title>
+<title>Search Flights</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- favicons -->
@@ -30,14 +30,19 @@
 </head>
 
 <body>
-	
-	<div class="main">
-		<h2>Search Flights & Purchase Tickets</h2>
+    <div class='top-nav'>
+		<nav>
+			<div style="text-align: right;">
+                <a href="/">Home</a> || 
+				<a href="/login">Users Login</a>
+			</div>
+		</nav>
+	</div>
 
-		<div style="text-align: center;">
-			<h3>Search Flights</h3>
-			<form action="/agent/searchFlights" method="POST">
-				<label>Depart:</label>
+    <div class="main">
+        <h2>Search Flight</h2>
+        <form action="/search/flight" method="POST">
+            <label>Depart:</label>
             <input type="text" name = "departure_city" placeholder="departure_city"/>
             <input type="text" name = "departure_airport" placeholder="departure_airport"/>
             <input type="date" name = "departure_time" placeholder="departure_time"/>
@@ -51,24 +56,23 @@
             <input type="text" name = "airline_name" placeholder="airline_name"/>
             <input type="text" name = "price" placeholder="max_price"/> 
             <button type="submit" class="btn btn-primary">Search</button>
-            {% if error1 %}
-                <p class="error"><strong>Error:</strong> {{error1}}</p>
+            {% if error %}
+                <p class="error"><strong>Error:</strong> {{error}}</p>
             {% endif %}
-			</form>
+        </form>
 
-			<br>
+        <br>
 			{% if upcoming_flights %}
 			<style>
 				table, td, th {
-					text-align: center;
+					text-align: center;;
 				}
 			</style>
+
 			<table class="table table-bordered table-sm">
-				
 				<thead>
 					<th>airline name</th>
 					<th>flight num</th>
-					<th>airplane id</th>
 					<th>departure place</th>
 					<th>departure time</th>
 					<th>arrival place</th>
@@ -81,63 +85,23 @@
 				<tbody>
 				{% for line in upcoming_flights %}
 					<tr>
-						<td>{{line[10]}}</td>
-						<td>{{line[1]}}</td>
 						<td>{{line[0]}}</td>
+						<td>{{line[1]}}</td>
 						<td>{{line[2]}}, {{line[3]}}</td>
-						<td>{{line[6]}}</td>  
-						<td>{{line[4]}}, {{line[5]}}</td>
+						<td>{{line[4]}}</td>  
+						<td>{{line[5]}}, {{line[6]}}</td>
 						<td>{{line[7]}}</td> 
 						<td>{{line[8]}}</td>
 						<td>{{line[9]}}</td>
-						<td>{{line[11]}}</td>
+						<td>{{line[10]}}</td>
 					</tr>
 				{% endfor %}
 				</tbody>
 			</table>
 			{% endif %}
 
-		<hr>
-
-			<h3>Purchase Tickets</h3>
-			<form action="/agent/purchaseTickets" method="POST">
-				<label for="airline_name">Airline Name:</label>
-				<select name="airline_name" required>
-					<option value="" disabled>please search for flights first</option>
-					{% if upcoming_flights%}
-					{% for line in upcoming_flights %}
-					<option value="{{line[10]}}">{{line[10]}}</option>
-					{% endfor %}
-					{% endif %}
-				</select>
-				<label for="flight_num">Flight Number:</label>
-				<select name="flight_num" required>
-					<option value="" disabled>please search for flights first</option>
-					{% if upcoming_flights%}
-					{% for line in upcoming_flights %}
-					<option value="{{line[1]}}">{{line[1]}}</option>
-					{% endfor %}
-					{% endif %}
-				</select>
-
-				<label>Customer Email: </label>
-				<input type="email" name = "customer_email" placeholder="customer_email" maxlength="50" required/>
-				<button type="submit" class="btn btn-primary">Purchase</button>
-				{% if error2 %}
-				<p class="text-danger"><strong>Sorry!</strong> {{error2}}</p>
-				{% endif %}
-			  </form>
-
-			  {% if message %}
-			  <p class="text-success">{{message}}</p>
-			  {% endif %}
-		</div>
-	</div>
-
-	<h2>Account</h2>
-	<a href="/agent/home">Home</a> ||
-	<a href="/logout">Logout</a>
-
+    </div>
+	
 </body>
 
 </html>
