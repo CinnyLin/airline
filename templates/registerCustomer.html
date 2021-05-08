@@ -30,27 +30,38 @@
 </head>
 
 <body>
-	<form action="/register/customer/auth" method="POST">
-		<input type="text" name = "email" placeholder="email" required/> </br>
-		<input type="text" name = "name" placeholder="name" required/></br>
-		<input type="password" name = "password" placeholder="password" required/></br>
-		<input type="number" name = "building_number" placeholder="building_number" required/></br>
-		<input type="text" name = "street" placeholder="street" required/> </br>
-		<input type="text" name = "city" placeholder="city" required/></br>
-		<input type="text" name = "state" placeholder="state" required/> </br>
-		<input type="number" name = "phone_number" placeholder="phone_number" required/></br>
-		<input type="number" name = "passport_number" placeholder="passport_number" required/></br>
-		<input type="date" name = "passport_expiration" placeholder="passport_expiration" required/></br>
-		<input type="text" name = "passport_country" placeholder="passport_country" required/></br>
-		<input type="date" name = "date_of_birth" placeholder="birthay" required/></br>
-		<input type="submit" value = Register />
-		{% if error %}
-			<p class="error"><strong>Error:</strong> {{error}}</p>
-		{% endif %}
-	</form>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
 
-<a href="/login">Go back</a>
-
+	<div class="main" style="text-align: center;">
+		<form action="/register/customer/auth" method="POST">
+			<label>Email:</label><input type="text" name = "email" placeholder="email" required/></br>
+			<label>Username:</label><input type="text" name = "name" placeholder="username" required/></br>
+			<label>Password:</label><input type="password" name = "password" placeholder="password" required/></br>
+			<br>
+			<label>Passport:</label><br>
+				<label>Passport No:</label><input type="number" name = "passport_number" placeholder="passport_number" required/></br>
+				<label>Expiration Date:</label><input type="date" name = "passport_expiration" placeholder="passport_expiration" required/></br>
+				<label>Citizenship:</label><input type="text" name = "passport_country" placeholder="passport_country" required/></br>
+			<br>
+			<label>Address:</label><br>
+				<label>Building No:</label><input type="number" name = "building_number" placeholder="building_number" required/></br>
+				<label>Street:</label><input type="text" name = "street" placeholder="street" required/></br>
+				<label>City:</label><input type="text" name = "city" placeholder="city" required/></br>
+				<label>State:</label><input type="text" name = "state" placeholder="state"/></br>
+			<br>
+			<label>Phone:</label><input type="number" name = "phone_number" placeholder="phone_number" required/></br>
+			<label>Birthday:</label><input type="date" name = "date_of_birth" placeholder="birthay" required/></br>
+			<br>
+			<button type="submit" class="btn btn-primary">register</button>
+			{% if error %}
+				<p class="error"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
+	
 </body>
 
 </html>

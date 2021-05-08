@@ -30,16 +30,23 @@
 </head>
 
 <body>
-	<form action="/login/customer/auth" method="POST">
-		<input type="text" name = "email" placeholder="email" required/> </br>
-		<input type="password" name = "password" placeholder="password" required/> </br>
-		<input type="submit" value = Login />
-		{% if error %}
-			<p class="error"><strong>Error:</strong> {{error}}</p>
-		{% endif %}
-	</form>
 
-<a href="/login">Go back</a>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
+
+	<div class="main" style="text-align: center;">
+		<h3>Customer Login</h3>
+		<form action="/login/customer/auth" method="POST">
+			<input type="text" name = "email" placeholder="email" required/> </br>
+			<input type="password" name = "password" placeholder="password" required/> </br>
+			<button type="submit" class="btn btn-primary">login</button>
+			{% if error %}
+				<p class="error"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
 
 </body>
 

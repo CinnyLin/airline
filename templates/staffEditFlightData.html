@@ -30,6 +30,12 @@
 </head>
 
 <body>
+
+	<div class="top-nav" style="text-align: right;">
+		<a href="/staff/home">Home</a> |
+		<a href="/logout">Logout</a>
+	</div>
+
 	<h2><strong>{{posts[0][1]}}</strong>'s Flight Data Edit</h2>
 	<h2>Edit Data</h2>
 	<h3>Edit Flight Status</h3>
@@ -38,7 +44,7 @@
 		<input type="radio" id="upcoming" name="edit_status" value="upcoming"><label for="upcoming">Upcoming</label>
 		<input type="radio" id="in-progress" name="edit_status" value="in-progress"><label for="in-progress">In-Progress</label>
 		<input type="radio" id="delayed" name="edit_status" value="delayed"><label for="delayed">Delayed</label></br>
-		<input type="submit" value = Edit />
+		<button type="submit" class="btn btn-primary">edit</button>
 		{% if error %}
 			<p class="text-danger"><strong>Error:</strong> {{error}}</p>
 		{% endif %}
@@ -46,7 +52,9 @@
 			<p class="text-success">{{message}}</p>
 		{% endif %}
 	</form>
+
 	<br><br>
+	
 	<h2>Add Data</h2>
 	<h3>Add Flight</h3>
 	<form action="/staff/flight/addFlight" method="POST">
@@ -61,7 +69,7 @@
 		<input type="radio" id="in-progress" name="status" value="in-progress"><label for="in-progress">In-Progress</label>
 		<input type="radio" id="delayed" name="status" value="delayed"><label for="delayed">Delayed</label> </br>
 		<input type="number" name = "airplane_id" placeholder="airplane_id" required/> </br>
-		<input type="submit" value = Add />
+		<button type="submit" class="btn btn-primary">add</button>
 		{% if error1 %}
 			<p class="text-danger"><strong>Error:</strong> {{error1}}</p>
 		{% endif %}
@@ -69,12 +77,14 @@
 			<p class="text-success">{{message1}}</p>
 		{% endif %}
 	</form>
+	
 	<br><br>
+
 	<h3>Add Airplane</h3>
 	<form action="/staff/flight/addAirplane" method="POST">
 		<input type="number" name = "airplane_id" placeholder="airplane_id" required/> </br>
 		<input type="number" name = "seats" placeholder="seats" required/> </br>
-		<input type="submit" value = Add />
+		<button type="submit" class="btn btn-primary">add</button>
 		{% if error2 %}
 			<p class="text-danger"><strong>Error:</strong> {{error2}}</p>
 		{% endif %}
@@ -82,12 +92,14 @@
 			<p class="text-success">{{message2}}</p>
 		{% endif %}
 	</form>
+	
 	<br><br>
+
 	<h3>Add Airport</h3>
 	<form action="/staff/flight/addAirport" method="POST">
 		<input type="text" name = "airport_name" placeholder="airport_name" required/> </br>
 		<input type="text" name = "airport_city" placeholder="airport_city" required/> </br>
-		<input type="submit" value = Add />
+		<button type="submit" class="btn btn-primary">add</button>
 		{% if error3 %}
 			<p class="text-danger"><strong>Error:</strong> {{error3}}</p>
 		{% endif %}
@@ -95,10 +107,6 @@
 			<p class="text-success">{{message3}}</p>
 		{% endif %}
 	</form>
-	<br><br>
-	<h2>Account</h2>
-	<a href="/staff/home">Home</a> ||
-	<a href="/logout">Logout</a>
 	
 </body>
 

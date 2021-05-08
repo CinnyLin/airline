@@ -30,16 +30,24 @@
 </head>
 
 <body>
-	<form action="/registerAuth" method="POST">
-		<input type="text" name = "username" placeholder="username" required/> </br>
-		<input type="password" name = "password" placeholder="password" required/></br>
-		<input type="submit" value = Register />
-		{% if error %}
-			<p class="error"><strong>Error:</strong> {{error}}</p>
-		{% endif %}
-	</form>
 
-<a href="/">Go back</a>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
+
+	<div class="main" style="text-align: center;">
+		<h3>Register</h3>
+		<form action="/registerAuth" method="POST">
+			<input type="text" name = "username" placeholder="username" required/> </br>
+			<input type="password" name = "password" placeholder="password" required/></br>
+			<button type="submit" class="btn btn-primary">register</button>
+			{% if error %}
+				<p class="error"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
+	
 
 </body>
 
