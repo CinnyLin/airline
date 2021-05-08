@@ -58,7 +58,7 @@
 			<input type="text" name = "price" placeholder="max_price"/> 
 			<button type="submit" class="btn btn-primary">Search</button>
 			{% if error %}
-				<p class="error"><strong>Error:</strong> {{error}}</p>
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
 			{% endif %}
 		</form>
 		
@@ -71,7 +71,7 @@
 			<input type="number" name = "ticket_id" placeholder="ticket_id (optional)"/>
 			<button type="submit" class="btn btn-primary">Search</button>
 			{% if error %}
-				<p class="error"><strong>Error:</strong> {{error}}</p>
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
 			{% endif %}
 		</form>
 

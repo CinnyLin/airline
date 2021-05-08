@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Staff Login</title>
+<title>Staff Delete Account</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- favicons -->
@@ -31,17 +31,24 @@
 
 <body>
 	<div class="top-nav" style="text-align: right;">
-		<a href="/">Home</a> |
+		<a href="/staff/home">Home</a> |
 		<a href="/login">Users Login</a>
 	</div>
 
 	<div class="main" style="text-align: center;">
-		<h3>Staff Login</h3>
-		<form action="/login/staff/auth" method="POST">
-			<input type="text" name = "username" placeholder="username" required/> </br>
-			<input type="password" name = "password" placeholder="password" required/> </br>
-			<button type="submit" class="btn btn-primary">login</button>
-			{% if error %}
+		<h3>Staff Delete Account</h3>
+		<form action="/deleteAccount/staff/auth" method="POST">
+			<input type="text" name="username" placeholder="username" required/> </br>
+			<input type="password" name="password" placeholder="password" required/> </br>
+			<button type="submit" class="btn btn-primary">confirm delete account</button>
+			<p style="color:red;">
+                <strong>Warning</strong>: 
+                You would lose admin access to your airline. This action cannot be undone.
+            </p>
+            {% if message %}
+				<p class="text-success">{{message}}</p>
+			{% endif %}
+            {% if error %}
 				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
 			{% endif %}
 		</form>

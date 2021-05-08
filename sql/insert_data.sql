@@ -20,7 +20,7 @@ INSERT INTO airline VALUES
 --
 
 INSERT INTO airlineStaff VALUES
--- ("staff@gmail.com", "password123", "Cinny", "Lin", "1999-12-31", "EVA Air") -- front-end test
+-- ("staff@gmail.com", "password123", "Cinny", "Lin", "1999-12-31", "EVA Air"), -- front-end test
 -- md5(password123) = 9df7a7314e3884b26222e2ccd834aa24
 ("airstaff123", "9df7a7314e3884b26222e2ccd834aa24", "Zoe", "Xiao", "2000-05-16", "China Eastern");
 
@@ -32,7 +32,7 @@ INSERT INTO airlineStaff VALUES
 --
 
 INSERT INTO airplane VALUES
--- ("Air China", 1, 100) --front-end test
+-- ("Air China", 1, 100), -- front-end test
 ("Air Arabia", 100, 50),
 ("Air Arabia", 120, 100),
 ("Air Arabia", 121, 100),
@@ -105,7 +105,7 @@ INSERT INTO airplane VALUES
 --
 
 INSERT INTO airport VALUES
--- ("JFK", "New York"), ("PVG", "Shanghai"); -- front-end test
+-- ("JFK", "New York"), ("PVG", "Shanghai"), -- front-end test
 ("CMN", "Cascablanca"), ("AUH", "Abu Dhabi"), -- Air Arabia
 ("PEK", "Beijing"), ("CAN", "Guangzhou"), ("SHA", "Shanghai"), -- Air China, China Airlines, China Eastern, China Southern
 ("LHR", "London"), ("AMS", "Amsterdam"), ("CDG", "Paris"), 
@@ -124,7 +124,7 @@ INSERT INTO airport VALUES
 --
 
 INSERT INTO bookingAgent VALUES
--- ("agent@gmail.com", "password123", 1), --front-end test
+-- ("agent@gmail.com", "password123", 1), -- front-end test
 ("agent2@gmail.com", "9df7a7314e3884b26222e2ccd834aa24", 2);
 
 
