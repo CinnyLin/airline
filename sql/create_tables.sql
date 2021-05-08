@@ -1,3 +1,13 @@
+-- --------------------------------------------------------
+-- Cinny added ON DELETE CASCADE to all foreign keys for delete account function
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `airline`
+--
+
 CREATE TABLE `airline` (
   `airline_name` varchar(50) NOT NULL,
   PRIMARY KEY(`airline_name`)
@@ -17,7 +27,7 @@ CREATE TABLE `airlineStaff` (
   `date_of_birth` date NOT NULL,
   `airline_name` varchar(50) NOT NULL,
   PRIMARY KEY(`username`),
-  FOREIGN KEY(`airline_name`) REFERENCES `airline`(`airline_name`)
+  FOREIGN KEY(`airline_name`) REFERENCES `airline`(`airline_name`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -31,7 +41,7 @@ CREATE TABLE `airplane` (
   `airplane_id` int(11) NOT NULL,
   `seats` int(11) NOT NULL,
   PRIMARY KEY(`airline_name`, `airplane_id`),
-  FOREIGN KEY(`airline_name`) REFERENCES `airline`(`airline_name`)
+  FOREIGN KEY(`airline_name`) REFERENCES `airline`(`airline_name`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -99,10 +109,9 @@ CREATE TABLE `flight` (
   `airplane_id` int(11) NOT NULL,
   `num_tickets_left` int(11), -- Cinny added
   PRIMARY KEY(`airline_name`, `flight_num`),
-  FOREIGN KEY(`airline_name`, `airplane_id`) REFERENCES `airplane`(`airline_name`, `airplane_id`),
-  FOREIGN KEY(`departure_airport`) REFERENCES `airport`(`airport_name`),
-  FOREIGN KEY(`arrival_airport`) REFERENCES `airport`(`airport_name`)
-  -- FOREIGN KEY(`num_tickets_left`) REFERENCES `airplane`(seats)
+  FOREIGN KEY(`airline_name`, `airplane_id`) REFERENCES `airplane`(`airline_name`, `airplane_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`departure_airport`) REFERENCES `airport`(`airport_name`) ON DELETE CASCADE,
+  FOREIGN KEY(`arrival_airport`) REFERENCES `airport`(`airport_name`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
@@ -117,7 +126,7 @@ CREATE TABLE `ticket` (
   `airline_name` varchar(50) NOT NULL,
   `flight_num` int(11) NOT NULL,
   PRIMARY KEY(`ticket_id`),
-  FOREIGN KEY(`airline_name`, `flight_num`) REFERENCES `flight`(`airline_name`, `flight_num`)
+  FOREIGN KEY(`airline_name`, `flight_num`) REFERENCES `flight`(`airline_name`, `flight_num`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
@@ -134,7 +143,7 @@ CREATE TABLE `purchase` (
   `booking_agent_email` varchar(50), -- Cinny added
   `purchase_date` date NOT NULL,
   PRIMARY KEY(`ticket_id`, `customer_email`),
-  FOREIGN KEY(`ticket_id`) REFERENCES `ticket`(`ticket_id`),
-  FOREIGN KEY(`customer_email`) REFERENCES `customer`(`email`),
-  FOREIGN KEY(`booking_agent_email`) REFERENCES `bookingAgent`(`email`)
+  FOREIGN KEY(`ticket_id`) REFERENCES `ticket`(`ticket_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`customer_email`) REFERENCES `customer`(`email`) ON DELETE CASCADE,
+  FOREIGN KEY(`booking_agent_email`) REFERENCES `bookingAgent`(`email`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
