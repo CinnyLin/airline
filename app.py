@@ -23,6 +23,7 @@
 # 8. dark theme
 # 9. each user (customer, agent, staff) has their own path!
 # 10. after search results come out the search field keeps search input (UI)
+# 11. fix table to center for all html pages (check customerViewTicket.html)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -368,27 +369,14 @@ def logout():
 @app.route('/customer/home')
 def homeCustomer():
     if session.get('email'):
-        email = check_injection(session['email'])
-        
+        email = session['email']
         cursor = conn.cursor()
-        query = """
-            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
+        query = "SELECT name FROM customer WHERE email = \'{}\'"
         cursor.execute(query.format(email))
-        data = cursor.fetchall() 
-        cursor.close()
-        
-        cursor = conn.cursor()
-        query2 = "SELECT name FROM customer WHERE email = \'{}\'"
-        cursor.execute(query2.format(email))
         username = cursor.fetchone()
         username = str(username)[2:-3]
         cursor.close()
-        
-        return render_template('homeCustomer.html', email=email, username=username, view_my_flights=data)
+        return render_template('homeCustomer.html', email=email, username=username)
     
     else:
         session.clear()
@@ -399,14 +387,36 @@ def homeCustomer():
 # The default should show upcoming flights. 
 # Optionally, you may allow user to specify a range of dates, 
 # specify destination and/or source airport name or city name etc.
-@app.route('/customer/searchTickets')
-def customerSearchTickets():
-	if session.get('email'):
-		email = session['email'] 
-		return render_template('customerSearchTicket.html', email=email, emailName=email.split('@')[0])
-	else:
-		session.clear()
-		return render_template('404.html')
+@app.route('/customer/viewTickets')
+def customerViewTickets():
+    if session.get('email'):
+        email = check_injection(session['email'])
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT ticket_id, airline_name, flight_num, 
+            Depart.airport_city, departure_airport, Arrive.airport_city, arrival_airport, 
+            departure_time, arrival_time, status \
+            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, \
+                airport AS Arrive, airport AS Depart\
+            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
+            Depart.airport_name = departure_airport AND Arrive.airport_name = arrival_airport"""
+        cursor.execute(query.format(email))
+        flight_data = cursor.fetchall() 
+        cursor.close()
+        
+        cursor = conn.cursor()
+        query2 = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query2.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
+        
+        return render_template('customerViewTicket.html', email=email, username=username, flight_data=flight_data)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 3. Customer Search Flights and Purchase Tickets
 @app.route('/customer/search&purchase', methods=['GET', 'POST'])
