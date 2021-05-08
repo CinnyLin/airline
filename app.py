@@ -12,13 +12,8 @@
 
 ### ADDITIONAL FEATURES ###
 # 4. forget and reset password
-# 5. delete account: on delete cascade database, ticket table does not change (bought flights are bought)!!
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
-# 2. chatbot connects to booking agent to automatically book for you
-# 7. can only search for available dates (dates without flights would be dimmed)
-# 8. dark theme
-# 9. each user (customer, agent, staff) has their own path!
 # 10. after search results come out the search field keeps search input (UI)
 
 # Import Flask Library
@@ -396,7 +391,6 @@ def deleteAccountCustomerAuth():
     if 'email' in request.form and 'password' in request.form:
         email =check_injection(request.form['email'])
         password = request.form['password']
-        session['email'] = email
         
         cursor = conn.cursor()
         query = "DELETE FROM customer WHERE email = \'{}\' and password = md5(\'{}\')"
@@ -460,10 +454,104 @@ def deleteAccountStaffAuth():
 
 # -------- Three Types of Users Reset Password -----------
 
-@app.route('/resetPassword')
-def resetPassword():
-    session.clear()
-    return redirect('/')
+@app.route('/resetPassword/customer')
+def resetPasswordCustomer():
+    return render_template('resetCustomer.html')
+
+@app.route('/resetPassword/agent')
+def resetPasswordAgent():
+    return render_template('resetAgent.html')
+
+@app.route('/resetPassword/staff')
+def resetPasswordStaff():
+    return render_template('resetStaff.html')
+
+# 1. Customer Reset Password Authentication
+@app.route('/resetPassword/customer/auth', methods=['GET', 'POST'])
+def resetPasswordCustomerAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        email =check_injection(request.form['email'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        cursor = conn.cursor()
+        query = """
+            UPDATE customer
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            email, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        cursor.close()
+        
+        # message = 'Your password is successfully changed.'
+        # return render_template('resetCustomer.html', message=message)
+        return redirect('/login/customer')
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 2. Agent Reset Password Authentication
+@app.route('/resetPassword/agent/auth', methods=['GET', 'POST'])
+def resetPasswordAgentAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        email =check_injection(request.form['email'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        cursor = conn.cursor()
+        query = """
+            UPDATE bookingAgent
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            email, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        cursor.close()
+        
+        # message = 'Your password is successfully changed.'
+        # return render_template('resetAgent.html', message=message)
+        return redirect('/login/agent')
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 3. Staff Reset Password Authentication
+@app.route('/resetPassword/staff/auth', methods=['GET', 'POST'])
+def resetPasswordStaffAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        username =check_injection(request.form['username'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+        
+        cursor = conn.cursor()
+        query = """
+            UPDATE airlineStaff
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            username, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        cursor.close()
+        
+        # message = 'Your password is successfully changed.'
+        # return render_template('resetStaff.html', message=message)
+        return redirect('/login/staff')
+
+    else:
+        session.clear()
+        return render_template('404.html')
 
 
 ### ------- User Type Exclusive Use Cases -------

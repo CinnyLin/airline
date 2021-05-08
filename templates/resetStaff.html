@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Agent Reset Password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="/images/favicon.png" rel="icon" />
+<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/css/animate.css">
+<link rel="stylesheet" type="text/css" href="/css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/css/superfish.css">
+<link rel="stylesheet" type="text/css" href="/css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<!-- modern JS -->
+<script src="/js/modernizr-2.6.2.min.js"></script>
+</head>
+
+<body>
+
+	<div class="top-nav" style="text-align: right;">
+		<a href="/staff/home">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
+
+	<div class="main" style="text-align: center;">
+		<h3>Agent Reset Password</h3>
+		<form action="/resetPassword/staff/auth" method="POST">
+			<input type="text" name="email" placeholder="email" required/> </br>
+			<input type="password" name="old_password" placeholder="old_password" required/> </br>
+            <input type="password" name="new_password" placeholder="new_password" required/> </br>
+			<button type="submit" class="btn btn-primary">confirm reset</button>
+			<p style="color:red;">
+                <strong>Note</strong>: 
+                You will be required to log in again.
+            </p>
+            {% if message %}
+				<p class="text-success">{{message}}</p>
+			{% endif %}
+            {% if error %}
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
+
+</body>
+
+</html>
