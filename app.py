@@ -23,7 +23,6 @@
 # 8. dark theme
 # 9. each user (customer, agent, staff) has their own path!
 # 10. after search results come out the search field keeps search input (UI)
-# 11. fix table to center for all html pages (check customerViewTicket.html)
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
