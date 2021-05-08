@@ -96,7 +96,7 @@
 			<form action="/agent/purchaseTickets" method="POST">
 				<label for="airline_name">Airline Name:</label>
 				<select name="airline_name" required>
-					<option value="" disabled>search fields required</option>
+					<option value="" disabled>please search for flights first</option>
 					{% if upcoming_flights%}
 					{% for line in upcoming_flights %}
 					<option value="{{line[10]}}">{{line[10]}}</option>
@@ -105,7 +105,7 @@
 				</select>
 				<label for="flight_num">Flight Number:</label>
 				<select name="flight_num" required>
-					<option value="" disabled>search fields required</option>
+					<option value="" disabled>please search for flights first</option>
 					{% if upcoming_flights%}
 					{% for line in upcoming_flights %}
 					<option value="{{line[1]}}">{{line[1]}}</option>

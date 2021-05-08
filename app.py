@@ -5,7 +5,7 @@
 # 4. Customer: Track My Spending
 # 5. Agent: View My Flights
 # 6. Agent: Purchase Tickets
-# 7. Agent: Search for Flights
+# 7. Agent: Search for Flights (PROBLEM: num_tickets_left)
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
 # 18. Staff: Compare Revenue (@zoexiao0516)
@@ -23,6 +23,7 @@
 # 6. login, register should be one page with three views (not three separate pages)
 # 2. chatbot connects to booking agent to automatically book for you
 # 7. can only search for available dates (dates without flights would be dimmed)
+# 8. dark theme
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash
@@ -581,7 +582,7 @@ def agentPurchaseTickets():
 
 		if not agentData:
 			agent_id_error = 'You are not a booking agent.'
-			return render_template('agentViewTicket.html', error2=agent_id_error)
+			return render_template('agentSearchFlight.html', error2=agent_id_error)
 
 		# validate customer_email is registered
 		cursor = conn.cursor()
@@ -592,7 +593,7 @@ def agentPurchaseTickets():
 
 		if not customer_data:
 			customer_error = 'Your customer is not registered.'
-			return render_template('agentViewTicket.html', error2=customer_error)
+			return render_template('agentSearchFlight.html', error2=customer_error)
 
 		# customer_email is validated	
 		cursor = conn.cursor()
@@ -605,7 +606,7 @@ def agentPurchaseTickets():
 
 		if not flight_data:
 			ticket_error = 'No more tickets left.'
-			return render_template('agentViewTicket.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
+			return render_template('agentSearchFlight.html', error2=ticket_error, email=email, emailName=email.split('@')[0])
 		else:
 			cursor = conn.cursor()
 			cursor = conn.cursor()
@@ -620,7 +621,7 @@ def agentPurchaseTickets():
 			conn.commit()
 			cursor.close()
 			message = 'Ticket bought successfully!'
-			return render_template('agentViewTicket.html', message=message, email=email, emailName=email.split('@')[0])
+			return render_template('agentSearchFlight.html', message=message, email=email, emailName=email.split('@')[0])
 	else:
 		session.clear()
 		return render_template('404.html')
