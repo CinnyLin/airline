@@ -12,7 +12,7 @@
 
 ### ADDITIONAL FEATURES ###
 # 4. forget and reset password
-# 5. delete account
+# 5. delete account: on delete cascade database, ticket table does not change (bought flights are bought)!!
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
 # 2. chatbot connects to booking agent to automatically book for you
@@ -146,12 +146,11 @@ def searchFlightStatus():
         return render_template('index.html', error2=error)
 
 
-# -------- Three Types of Registration -----------
-# Note that password needs to be hashed before saving to database
+### ------- User Type Account Settings ----------
 
-# PROBLEM: with the current template, i don't know which date is birthday and which date is passport expiration
-# PROBLEM: right now we have three seperate pages for registration and login
-#           make it one page with three tab views
+# -------- Three Types of Registration -----------
+# Password is hashed before saving to database
+
 # @app.route('/register')
 # def register():
 #     return render_template('register.html')
@@ -365,12 +364,109 @@ def loginStaffAuth():
         return render_template('loginStaff.html', error=error)
 
 
-# -------- Three Types of Users Logout -----------
+# -------- Logout Function -----------
 @app.route('/logout')
 def logout():
     session.clear() #session.pop('username')
     return redirect('/')
 
+
+# -------- Three Types of Users Delete Account -----------
+
+# @app.route('/deleteAccount')
+# def deleteAccount():
+#     session.clear()
+#     return redirect('/')
+
+@app.route('/deleteAccount/customer')
+def deleteAccountCustomer():
+    return render_template('deleteCustomer.html')
+
+@app.route('/deleteAccount/agent')
+def deleteAccountAgent():
+    return render_template('deleteAgent.html')
+
+@app.route('/deleteAccount/staff')
+def deleteAccountStaff():
+    return render_template('deleteStaff.html')
+
+# 1. Customer Delete Account Authentication
+@app.route('/deleteAccount/customer/auth', methods=['GET', 'POST'])
+def deleteAccountCustomerAuth():
+    if 'email' in request.form and 'password' in request.form:
+        email =check_injection(request.form['email'])
+        password = request.form['password']
+        session['email'] = email
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM customer WHERE email = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        cursor.close()
+        
+        message = 'Your account is successfully deleted. We are sorry to see you go!'
+        return render_template('deleteCustomer.html', message=message)
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 2. Booking Agent Delete Account Authentication
+@app.route('/deleteAccount/agent/auth', methods=['GET', 'POST'])
+def deleteAccountAgentAuth():
+    if 'email' in request.form and 'password' in request.form:
+        email =check_injection(request.form['email'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM bookingAgent WHERE email = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        data = cursor.fetchone()
+        cursor.close()
+        
+        if data == None:
+            message = 'Your account is successfully deleted.'
+            return render_template('deleteAgent.html', message=message)
+        else:
+            error = 'Sorry! We encountered some problem when deleting your account. Please try again.'
+            return render_template('deleteAgent.html', error=error)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 3. Airline Staff Delete Account Authentication
+@app.route('/deleteAccount/staff/auth', methods=['GET', 'POST'])
+def deleteAccountStaffAuth():
+    if 'username' in request.form and 'password' in request.form:
+        username =check_injection(request.form['username'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM airlineStaff WHERE username = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(username, hashlib.md5(password.encode()).hexdigest()))
+        data = cursor.fetchone()
+        cursor.close()
+        
+        if data == None:
+            message = 'Your account is successfully deleted.'
+            return render_template('deleteStaff.html', message=message)
+        else:
+            error = 'Sorry! We encountered some problem when deleting your account. Please try again.'
+            return render_template('deleteStaff.html', error=error)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# -------- Three Types of Users Reset Password -----------
+
+@app.route('/resetPassword')
+def resetPassword():
+    session.clear()
+    return redirect('/')
+
+
+### ------- User Type Exclusive Use Cases -------
 
 # -------- Customer Exlusive Use Cases -----------
 # 1. Customer Homepage
