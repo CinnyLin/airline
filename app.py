@@ -1353,7 +1353,7 @@ def staffReports():
         for (key, value) in rows_dict.items():
             array_1.append([key, value])
         cursor.close()
-        return render_template('staffTicket.html', username=username, posts=array_1)
+        return render_template('staffReports.html', username=username, posts=array_1)
     
     else:
         session.clear()

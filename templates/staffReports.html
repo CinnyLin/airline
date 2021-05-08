@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Top Destinations</title>
+<title>Staff Reports</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- favicons -->
@@ -32,33 +32,8 @@
 <body>
 	
 	<div class="main">
-        <h2>View Top Destination</h2>
-            <h3 style="text-align: center;">Top 3 Most Popular Destination in Last 3 Months</h3>
-            <table class="table table-bordered table-sm">
-                <th>city</th>
-                <th># tickets</th>
-            {% for line in month %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>
-                </tr>
-            {% endfor %}
-            </table>
-
-            <h3 style="text-align: center;">Top 3 Most Popular Destination Last Year</h3>
-            <table class="table table-bordered table-sm">
-                <th>city</th>
-                <th># ticket</th>
-
-            {% for line in year %}		
-                <tr>
-                    <td>{{line[0]}}</td>
-                    <td>{{line[1]}}</td>
-                </tr>
-            {% endfor %}
-            </table>
-        
-        </div>
+        <!-- PROBLEM: NO BACK-END FUNCTION YET @CinnyLin -->
+        <!-- PROBLEM: DRAW CHART WITH D3 @zoexiao0516 -->
 	</div>
 
 	<h2>Account</h2>
