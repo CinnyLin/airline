@@ -1,10 +1,11 @@
 ### REQUIREMENTS ### (delete when complete)
+# 0. Public Functions: 
+# (1) Search for upcoming flights based on source city/airport name, destination city/airport name, date.
+# (2) Check flight status based on flight number, arrival/departure date.
 # 1. Customer: View My Flights 
 # 2. Customer: Purchase Tickets
 # 3. Customer: Search for Flights
 # 4. Customer: Track My Spending
-# 5. Agent: View My Flights
-# 6. Agent: Purchase Tickets
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
 # 18. Staff: Compare Revenue (@zoexiao0516)
@@ -524,31 +525,34 @@ def trackSpending():
 def homeAgent():
     if session.get('email'):
         email = check_injection(session['email'])
-        cursor = conn.cursor()
-        query = """
-            SELECT ticket_id, airline_name, airplane_id, flight_num, A1.airport_city, 
-            departure_airport, A2.airport_city, arrival_airport, departure_time, arrival_time, status \
-            FROM flight NATURAL JOIN purchase NATURAL JOIN ticket, airport AS A2, airport AS A1\
-            WHERE customer_email = \'{}\' AND status = 'upcoming' AND \
-            A2.airport_name = departure_airport AND A1.airport_name = arrival_airport"""
-        cursor.execute(query.format(email))
-        data = cursor.fetchall() 
-        cursor.close()
-        return render_template('homeAgent.html', email=email, 
-        emailName=email.split('@')[0], view_my_flights=data)
+        return render_template('homeAgent.html', email=email, emailName=email.split('@')[0])
     else:
         session.clear()
         return render_template('404.html')
 
 # 1. Booking Agent View Purchased Tickets
+# Provide various ways for the booking agents to see flights information for which they 
+# purchased on behalf of customers. The default should be showing for the upcoming flights. 
+# Optionally you may include a way for the user to specify a range of dates, specify destination 
+# and/or source airport and/or city etc to show all the flights for which they purchased.
 @app.route('/agent/viewTickets', methods=['GET', 'POST'])
 def agentViewTicket():
-	if session.get('email'):
-		email = check_injection(session['email'])
-		return render_template('agentViewTicket.html', email=email, emailName=email.split('@')[0], )
-	else:
-		session.clear()
-		return render_template('404.html')
+    if session.get('email'):
+        email = check_injection(session['email'])
+			
+        cursor = conn.cursor()
+        query1 = "SELECT booking_agent_id FROM bookingAgent WHERE email = \'{}\'"
+        cursor.execute(query1.format(email))
+        booking_agent_id = cursor.fetchone()
+        query2 = "SELECT * FROM agent_view_flight WHERE email = \'{}\'"
+        cursor.execute(query2.format(email))
+        data = cursor.fetchall()
+        cursor.close()
+        return render_template('agentViewTicket.html', email=email, view_my_flights=data, booking_agent_id=booking_agent_id)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 2.-3. Booking Agent Search Flight and Purchase Ticket
 @app.route('/agent/search&purchase', methods=['GET', 'POST'])
