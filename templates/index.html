@@ -29,19 +29,29 @@
 <script src="/js/modernizr-2.6.2.min.js"></script>
 </head>
 
+<style>
+	div {
+	padding: 5px;
+	margin: 5px;
+	}
+</style>
+
 <body>
 	<div class='top-nav'>
-		<nav>
-			<div style="text-align: right;">
+		<nav style="text-align: right;">
+			<div>
+				<a href="/">
+					<img alt="Home" src="/images/favicon.png" width="20" height="20"/>
+				</a>
 				<a href="/">Home</a> |
 				<a href="/login">Users Login</a>
 			</div>
 		</nav>
 	</div>
 
-	<div class="main">
+	<div class="main" style="text-align: center;">
 		
-		<h3>Search Flight</h3>
+		<h2>Search Flight</h2>
 		<form action="/search/flight" method="POST">
 			<label>Depart:</label>
 			<input type="text" name = "departure_city" placeholder="departure_city"/>
@@ -64,7 +74,7 @@
 		
 		<hr>
 		
-		<h3>Search Flight Status</h3>
+		<h2>Search Flight Status</h2>
 		<form action="/search/flightStatus" method="POST">
 			<input type="text" name = "airline_name" placeholder="airline_name"/>
 			<input type="number" name = "flight_num" placeholder="flight_num"/>

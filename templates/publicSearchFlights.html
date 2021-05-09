@@ -29,17 +29,27 @@
 <script src="/js/modernizr-2.6.2.min.js"></script>
 </head>
 
+<style>
+	div {
+	padding: 5px;
+	margin: 5px;
+	}
+</style>
+
 <body>
     <div class='top-nav'>
 		<nav>
 			<div style="text-align: right;">
+				<a href="/">
+					<img alt="Home" src="/images/favicon.png" width="20" height="20"/>
+				</a>
                 <a href="/">Home</a> |
 				<a href="/login">Users Login</a>
 			</div>
 		</nav>
 	</div>
 
-    <div class="main">
+    <div class="main" style="text-align: center;">
         <h2>Search Flight</h2>
         <form action="/search/flight" method="POST">
             <label>Depart:</label>
