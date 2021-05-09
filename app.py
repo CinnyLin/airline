@@ -5,15 +5,11 @@
 # 9. Agent: View Top Customers (PROBLEM)
 # 17. Staff: View Reports 
 # 18. Staff: Compare Revenue
-# 20. enforce constraints: e.g. customer can't create new flights
-# 22. both agent and customer puts in email and password to login, 
-#   PROBLEM: I can go to booking agent login page and login as customer
 
 ### ADDITIONAL FEATURES ###
-# 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
 # 10. after search results come out the search field keeps search input (UI)
-# 11. where you have been: map for customers
+# 11. where you have been: map for customers tickets bought and staff destinations
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
@@ -1584,17 +1580,22 @@ def staffFlightCustomer():
 		session.clear()
 		return render_template('404.html')
 
-# 8. Airline Staff View Reports 
+# 8. Airline Staff View Ticket Reports 
 # Total amounts of ticket sold based on range of dates/last year/last month etc. 
 # Month-wise tickets sold in a bar chart.
 # PROBLEM: not sure how to write this one
-@app.route('/staff/reports', methods=['GET', 'POST'])
-def staffReports():
+@app.route('/staff/ticketReport', methods=['GET', 'POST'])
+def staffticketReport():
     if session.get('username'):
         username = check_injection(session['username'])
-        airline = session[username][1]
+        # airline = session[username][1]
         startTime = check_injection(request.form['StartTime'])
         endTime = check_injection(request.form['EndTime'])
+
+        cursor = conn.cursor()
+        query0 = "SELECT airlinename FROM airlineStaff WHERE username=\'{}\'"
+        cursor.execute(query0.format(username))
+        airline = cursor.fetchone()
 
         cursor = conn.cursor()
         query = """
@@ -1606,7 +1607,7 @@ def staffReports():
             GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
         cursor.execute(query.format(airline, startTime, endTime))
         data = cursor.fetchall()
-        
+
         rows_dict = {}
         startDate = datetime.strptime(startTime, '%Y-%m-%d')
         endDate = datetime.strptime(endTime, '%Y-%m-%d')
@@ -1616,19 +1617,20 @@ def staffReports():
             if year == endDate.year and month == endDate.month+1:
                 break
             if month <= 12:
-                temp = str(year)+"-"+str(month)
-                rows_dict[temp] = 0
+                rows_dict[str(year)+"/"+str(month)] = 0
                 month += 1
             else:
                 year += 1
                 month = 1
+        
+        staffReportData = []
         for i in data:
-            rows_dict[str(i[1])+"-"+str(i[2])] = i[0]
-        array_1 = []
-        for (key, value) in rows_dict.items():
-            array_1.append([key, value])
+            monthlyDataDict = dict()
+            monthlyDataDict["time"] = str(i[1])+"/"+str(i[2])
+            monthlyDataDict["num_tickets"] = i[0]
+            staffReportData.append(monthlyDataDict)
         cursor.close()
-        return render_template('staffReports.html', username=username, posts=array_1)
+        return render_template('staffReports.html', username=username, posts=staffReportData)
     
     else:
         session.clear()
@@ -1639,8 +1641,8 @@ def staffReports():
 # (when customer bought tickets without using a booking agent) and total amount 
 # of revenue earned from indirect sales (when customer bought tickets using 
 # booking agents) in the last month and last year
-@app.route('/staff/revenue')
-def staffRevenue():
+@app.route('/staff/earningsReport')
+def staffEarningReport():
     if session.get('username'):
         username = check_injection(session['username'])
         
