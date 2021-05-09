@@ -143,10 +143,10 @@
 
 				<style>
 					.bar{
-						fill: steelblue;
+						fill: #0598aa;
 					}
 					.bar:hover{
-						fill: #0598aa;
+						fill: steelblue;
 						/* content: attr(spending); */
 					}
 					.axis {
@@ -188,8 +188,7 @@
 							"translate(" + margin.left + "," + margin.top + ")");
 					
 					// load the data
-					d3.csv("{{url_for('static', filename='data/')}}{{'customerSpending.csv'}}",
-					//d3.json("{{url_for('static', filename='data/')}}{{'customerSpending.json'}}",
+					d3.json("{{url_for('static', filename='data/')}}{{'customerSpending.json'}}",
 							//.post(JSON.stringify(customerSpending.json)),
 							function(error, data) {
 

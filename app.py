@@ -1,8 +1,9 @@
 ### REQUIREMENTS ### (delete when complete)
 # GRAPH PROBLEM: does not GET /static/data/data.json again when submitting
-# 4. Customer: Track My Spending
-# 9. Agent: View Top Customers
-# 17. Staff: View Reports
+# READ THIS: https://towardsdatascience.com/combining-python-and-d3-js-to-create-dynamic-visualization-applications-73c87a494396
+# 4. Customer: Track My Spending (PROBLEM)
+# 9. Agent: View Top Customers (PROBLEM)
+# 17. Staff: View Reports 
 # 18. Staff: Compare Revenue
 # 20. enforce constraints: e.g. customer can't create new flights
 # 22. both agent and customer puts in email and password to login, 
@@ -12,6 +13,7 @@
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
 # 10. after search results come out the search field keeps search input (UI)
+# 11. where you have been: map for customers
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
@@ -1044,59 +1046,87 @@ def agentCommission():
 # Show another bar chart showing each of these 5 customers in x-axis and amount commission received in y- axis.
 @app.route('/agent/topCustomers')
 def agentTopCustomers():
-	if session.get('email'):
-		email = check_injection(session['email'])
+    if session.get('email'):
+        email = check_injection(session['email'])
 
-		cursor = conn.cursor()
-		query = """
+        # (1) by number of tickets (last 6 months)
+        cursor = conn.cursor()
+        query = """
             SELECT customer_email, COUNT(ticket_id) \
             FROM agent_commission 
             WHERE email = \'{}\' AND \
                 DATEDIFF(CURDATE(), DATE(purchase_date)) < 183 \
             GROUP BY customer_email \
             ORDER BY COUNT(ticket_id) DESC"""
-		cursor.execute(query.format(email))
-		ticket_data = cursor.fetchall()
-		cursor.close()
-
-		ticket_length = len(ticket_data)
-		if ticket_length >= 5:
-			customer1 = [ticket_data[i][0] for i in range(5)]
-			tickets = [ticket_data[i][1] for i in range(5)]
-		else:
-			customer1 = [ticket_data[i][0] for i in range(ticket_length)]
-			tickets = [ticket_data[i][1] for i in range(ticket_length)]
-			for _ in range(5 - ticket_length):
-				customer1.append(' ')
-				tickets.append(0)
+        cursor.execute(query.format(email))
+        ticket_data = cursor.fetchall()
+        cursor.close()
+        
+        topTicketsData = []
+        ticket_length = len(ticket_data)
+        if ticket_length >= 5:
+            for i in range(5):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=ticket_data[i][0]
+                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
+                topTicketsData.append(ticketDataDict)
+        else:
+            for i in range(ticket_length):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=ticket_data[i][0]
+                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
+                topTicketsData.append(ticketDataDict)
+            for _ in range(5 - ticket_length):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=' '
+                ticketDataDict["num_tickets"]=0
+                topTicketsData.append(ticketDataDict)
 		
-		cursor = conn.cursor()
-		query2 = """
-            SELECT customer_email, SUM(ticket_price) * 0.1 \
+        # (2) by amount of commission (last year)
+        cursor = conn.cursor()
+        query2 = """
+            SELECT customer_email, SUM(ticket_price)*0.1 \
             FROM agent_commission 
             WHERE email = \'{}\' AND \
-                DATEFIFF(CURDATE(), DATE(purchase_date)) < 365 \
+                DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
             GROUP BY customer_email \
             ORDER BY SUM(ticket_price) DESC"""
-		cursor.execute(query2.format(email))
-		commission_data = cursor.fetchall()
-		cursor.close()
+        cursor.execute(query2.format(email))
+        commission_data = cursor.fetchall()
+        cursor.close()
+        
+        topCommissionData = []
+        commission_length = len(commission_data)
+        if commission_length >= 5:
+            for i in range(5):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=commission_data[i][0]
+                commissionDataDict["commission"]=int(commission_data[i][1])
+                topCommissionData.append(commissionDataDict)
+        else:
+            for i in range(commission_length):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=commission_data[i][0]
+                commissionDataDict["commission"]=int(commission_data[i][1])
+                topCommissionData.append(commissionDataDict)
+            for _ in range(5 - commission_length):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=' '
+                commissionDataDict["commission"]=0
+                topCommissionData.append(commissionDataDict)
+        
+        with open("static/data/topTickets.json", "w") as outputFile: 
+            json.dump(topTicketsData, outputFile)
+        
+        with open("static/data/topCommission.json", "w") as outputFile: 
+            json.dump(topCommissionData, outputFile)
 
-		commission_length = len(commission_data)
-		if commission_length >= 5:
-			customer2 = [commission_data[i][0] for i in range(5)]
-			commissions = [commission_data[i][1] for i in range(5)]
-		else:
-			customer2 = [commission_data[i][0] for i in range(commission_length)]
-			commissions = [int(commission_data[i][1]) for i in range(commission_length)]
-			for _ in range(5 - ticket_length):
-				customer2.append(' ')
-				commissions.append(0)
-		return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0], \
-            customer1=customer1, customer2=customer2, tickets=tickets, commissions=commissions)
-	else:
-		session.clear()
-		return render_template('404.html')
+        return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0],
+            topTicketsData=topTicketsData, topCommissionData=topCommissionData)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 
 # ------ Airline Staff Exclusive Functions -------
