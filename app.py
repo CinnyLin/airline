@@ -1,7 +1,4 @@
 ### REQUIREMENTS ### (delete when complete)
-# 0. Public Functions: 
-# (1) Search for upcoming flights based on source city/airport name, destination city/airport name, date.
-# (2) Check flight status based on flight number, arrival/departure date. 
 # 4. Customer: Track My Spending (@zoexiao0516)
 # 9. Agent: View Top Customers (@zoexiao0516)
 # 17. Staff: View Reports (@zoexiao0516)
@@ -11,7 +8,6 @@
 #   PROBLEM: I can go to booking agent login page and login as customer
 
 ### ADDITIONAL FEATURES ###
-# 4. forget and reset password
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
 # 10. after search results come out the search field keeps search input (UI)
@@ -395,11 +391,12 @@ def deleteAccountCustomerAuth():
         cursor = conn.cursor()
         query = "DELETE FROM customer WHERE email = \'{}\' and password = md5(\'{}\')"
         cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        conn.commit()
         cursor.close()
         
         message = 'Your account is successfully deleted. We are sorry to see you go!'
         return render_template('deleteCustomer.html', message=message)
-
+        
     else:
         session.clear()
         return render_template('404.html')
@@ -414,16 +411,12 @@ def deleteAccountAgentAuth():
         cursor = conn.cursor()
         query = "DELETE FROM bookingAgent WHERE email = \'{}\' and password = md5(\'{}\')"
         cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
-        data = cursor.fetchone()
+        conn.commit()
         cursor.close()
         
-        if data == None:
-            message = 'Your account is successfully deleted.'
-            return render_template('deleteAgent.html', message=message)
-        else:
-            error = 'Sorry! We encountered some problem when deleting your account. Please try again.'
-            return render_template('deleteAgent.html', error=error)
-    
+        message = 'Your account is successfully deleted.'
+        return render_template('deleteAgent.html', message=message)
+
     else:
         session.clear()
         return render_template('404.html')
@@ -438,16 +431,12 @@ def deleteAccountStaffAuth():
         cursor = conn.cursor()
         query = "DELETE FROM airlineStaff WHERE username = \'{}\' and password = md5(\'{}\')"
         cursor.execute(query.format(username, hashlib.md5(password.encode()).hexdigest()))
-        data = cursor.fetchone()
+        conn.commit()
         cursor.close()
         
-        if data == None:
-            message = 'Your account is successfully deleted.'
-            return render_template('deleteStaff.html', message=message)
-        else:
-            error = 'Sorry! We encountered some problem when deleting your account. Please try again.'
-            return render_template('deleteStaff.html', error=error)
-    
+        message = 'Your account is successfully deleted.'
+        return render_template('deleteStaff.html', message=message)
+
     else:
         session.clear()
         return render_template('404.html')
@@ -485,11 +474,11 @@ def resetPasswordCustomerAuth():
             hashlib.md5(new_password.encode()).hexdigest(),
             email, 
             hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
         cursor.close()
-        
-        # message = 'Your password is successfully changed.'
-        # return render_template('resetCustomer.html', message=message)
-        return redirect('/login/customer')
+
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginCustomer.html', message=message)
 
     else:
         session.clear()
@@ -514,11 +503,12 @@ def resetPasswordAgentAuth():
             hashlib.md5(new_password.encode()).hexdigest(),
             email, 
             hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
         cursor.close()
         
-        # message = 'Your password is successfully changed.'
-        # return render_template('resetAgent.html', message=message)
-        return redirect('/login/agent')
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginAgent.html', message=message)
+
 
     else:
         session.clear()
@@ -543,11 +533,11 @@ def resetPasswordStaffAuth():
             hashlib.md5(new_password.encode()).hexdigest(),
             username, 
             hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
         cursor.close()
         
-        # message = 'Your password is successfully changed.'
-        # return render_template('resetStaff.html', message=message)
-        return redirect('/login/staff')
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginStaff.html', message=message)
 
     else:
         session.clear()
