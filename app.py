@@ -1,8 +1,9 @@
 ### REQUIREMENTS ### (delete when complete)
-# 4. Customer: Track My Spending (@zoexiao0516)
-# 9. Agent: View Top Customers (@zoexiao0516)
-# 17. Staff: View Reports (@zoexiao0516)
-# 18. Staff: Compare Revenue (@zoexiao0516)
+# GRAPH PROBLEM: does not GET /static/data/data.json again when submitting
+# 4. Customer: Track My Spending
+# 9. Agent: View Top Customers
+# 17. Staff: View Reports
+# 18. Staff: Compare Revenue
 # 20. enforce constraints: e.g. customer can't create new flights
 # 22. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
@@ -13,10 +14,12 @@
 # 10. after search results come out the search field keeps search input (UI)
 
 # Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect, flash
+from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
 import mysql.connector
 import hashlib
 from datetime import datetime, date
+#from collections import defaultdict
+import json
 
 
 # Initialize the app from Flask (and reference templates!)
@@ -719,77 +722,102 @@ def customerPurchaseTicket():
         return render_template('404.html')
 
 # 4. Customer Track Spending
-# Default view will be total amount of money spent in the past year 
-# and a bar chart showing month-wise money spent for last 6 months. 
+# Default view will be :
+# (1) total amount of money spent in the past year 
+# (2) a bar chart showing month-wise money spent for last 6 months. 
 # Customer will also have option to specify a range of dates to view total amount of money 
 # spent within that range and a bar chart showing month-wise money spent within that range.
 @app.route('/customer/spending', methods=['POST', 'GET'])
 def trackSpending():
-	if session.get('email'):
-		email = check_injection(session['email'])
+    if session.get('email'):
+        email = check_injection(session['email'])
+        
+        cursor = conn.cursor()
+        query0 = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query0.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
 
 		# (1) show total spending in the past year or specified duration
-		duration = request.form.get("duration")
-		if duration is None:
-			duration = "365"
-		cursor = conn.cursor()
-		query = """
-            SELECT SUM(price)\
+        duration = request.form.get("duration")
+        if duration is None:
+            duration = "365"
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT SUM(price) \
             FROM customer_spending \
             WHERE customer_email = \'{}\' AND \
                 (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())"""
-		cursor.execute(query.format(email, duration))
-		total_spending_data = cursor.fetchone()
-		cursor.close()
+        cursor.execute(query.format(email, duration))
+        total_spending_data = cursor.fetchone()
+        cursor.close()
 
 		# (2) show month-wise spending in the past 6 months
-		period = request.form.get("period")
-		if period is None:
-			period = '6'
-		today = datetime.date.today()
-		past_day = today.day
-		past_month = (today.month - int(period)) % 12
-		if past_month == 0:
-			past_month = 12
-		past_year = today.year + ((today.month - int(period) - 1) // 12)
-		past_date = datetime.date(past_year, past_month, past_day) # the day 6 months ago
-
-		cursor = conn.cursor()
-		query2 = """
+        period = request.form.get("period")
+        if period is None:
+            period = "6"
+        today = date.today()
+        past_day = today.day
+        past_month = (today.month - int(period)) % 12
+        if past_month == 0:
+            past_month = 12
+        past_year = today.year + ((today.month - int(period) - 1) // 12)
+        past_date = date(past_year, past_month, past_day)
+        
+        cursor = conn.cursor()
+        query2 = """
             SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, \
                 SUM(price) AS monthly_spending \
             FROM customer_spending \
             WHERE customer_email = \'{}\' AND purchase_date >= \'{}\' \
             GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
-		cursor.execute(query2.format(email, past_date))
-		monthly_spending_data = cursor.fetchall()
-		cursor.close()
+        cursor.execute(query2.format(email, past_date))
+        monthly_spending_data = cursor.fetchall()
+        cursor.close()
+        
+        customerSpendingData = []
+        for i in range(1, int(period)+1):
+            monthlyDataDict = dict()
+            month = (past_date.month + i) % 12
+            if month == 0:
+                month = 12
+            year = past_date.year + ((past_date.month + i - 1) // 12)
+            monthlyDataDict["time"] = f'{year}/{month}'
+            monthlyDataDict["spending"] = 0
 
-		months = []
-		monthly_spendings = []
-		for i in range(int(period)):
-			month = (past_date.month + i + 1) % 12
-			if month == 0:
-				month = 12
-			year = past_date.year + ((past_date.month + i) // 12)
-			flag = False
-			for one_month in monthly_spending_data:
-				if one_month[0] == year and one_month[1] == month:
-					flag = True
-					break
-			if flag:
-				monthly_spendings.append(int(one_month[2]))
-			else:
-				monthly_spendings.append(0)
-			months.append(str(year)+'-'+str(month))
+            for spendingData in monthly_spending_data:
+                if (spendingData[0]==year) and (spendingData[1]==month):
+                    monthlyDataDict["spending"] = int(spendingData[2])
+            customerSpendingData.append(monthlyDataDict)
+        
+        # # dump data to json
+        # customerSpendingData = json.dumps(customerSpendingData)
+        # # save to dataStore
+        # data.customerSpendingData = json.loads(customerSpendingData)
+        # # save to temporary variable
+        # customerSpendingData=data.customerSpendingData
 
-		return render_template('customerSpending.html', email=email, emailName=email.split('@')[0], \
-            total_spending_data=total_spending_data[0], duration=duration, period=period, \
-            months=months, monthly_spendings=monthly_spendings)
-	else:
-		session.clear()
-		return render_template('404.html')
+        with open("static/data/customerSpending.json", "w") as outputFile: 
+            json.dump(customerSpendingData, outputFile)
 
+        return render_template('customerSpending.html', email=email, username=username,
+            total_spending_data=total_spending_data[0], duration=duration, period=period,
+            customerSpendingData=customerSpendingData)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# class dataStore():
+#      customerSpendingData= None
+# data=dataStore()
+
+# @app.route("/get-data", methods=["GET", "POST"])
+# def returnSpendingData():
+#     f = data.customerSpendingData
+#     return jsonify(f)
 
 # ------- Booking Agent Exclusive Functions --------
 # 0. Booking Agent Homepage
