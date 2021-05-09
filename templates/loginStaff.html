@@ -30,16 +30,25 @@
 </head>
 
 <body>
-	<form action="/login/staff/auth" method="POST">
-		<input type="text" name = "username" placeholder="username" required/> </br>
-		<input type="password" name = "password" placeholder="password" required/> </br>
-		<input type="submit" value = Login />
-		{% if error %}
-			<p class="error"><strong>Error:</strong> {{error}}</p>
-		{% endif %}
-	</form>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
 
-<a href="/login">Go back</a>
+	<div class="main" style="text-align: center;">
+		<h3>Staff Login</h3>
+		<form action="/login/staff/auth" method="POST">
+			<input type="text" name = "username" placeholder="username" required/> </br>
+			<input type="password" name = "password" placeholder="password" required/> </br>
+			<button type="submit" class="btn btn-primary">login</button>
+			{% if message %}
+				<p class="text-success">{{message}}</p>
+			{% endif %}
+			{% if error %}
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
 
 </body>
 

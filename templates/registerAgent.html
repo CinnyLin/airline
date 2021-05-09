@@ -30,17 +30,22 @@
 </head>
 
 <body>
-	<form action="/register/agent/auth" method="POST">
-		<input type="text" name = "email" placeholder="email" required/> </br>
-		<input type="password" name = "password" placeholder="password" required/></br>
-		<input type="number" name = "booking_agent_id" placeholder="booking_agent_id" required/></br>
-		<input type="submit" value = Register />
-		{% if error %}
-			<p class="error"><strong>Error:</strong> {{error}}</p>
-		{% endif %}
-	</form>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/">Home</a> |
+		<a href="/login">Users Login</a>
+	</div>
 
-<a href="/login">Go back</a>
+	<div class="main" style="text-align: center;">
+		<form action="/register/agent/auth" method="POST">
+			<input type="text" name = "email" placeholder="email" required/> </br>
+			<input type="password" name = "password" placeholder="password" required/></br>
+			<input type="number" name = "booking_agent_id" placeholder="booking_agent_id" required/></br>
+			<button type="submit" class="btn btn-primary">register</button>
+			{% if error %}
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
+	</div>
 
 </body>
 

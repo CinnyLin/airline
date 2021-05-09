@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Staff Reports</title>
+<title>Agent Reset Password</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- favicons -->
@@ -32,19 +32,29 @@
 <body>
 
 	<div class="top-nav" style="text-align: right;">
-		<a href="/staff/home">Home</a> |
-		<a href="/logout">Logout</a>
+		<a href="/customer/home">Home</a> |
+		<a href="/login">Users Login</a>
 	</div>
 
-	
-	<div class="main">
-        <!-- PROBLEM: NO BACK-END FUNCTION YET @CinnyLin -->
-        <!-- PROBLEM: DRAW CHART WITH D3 @zoexiao0516 -->
+	<div class="main" style="text-align: center;">
+		<h3>Agent Reset Password</h3>
+		<form action="/resetPassword/customer/auth" method="POST">
+			<input type="text" name="email" placeholder="email" required/> </br>
+			<input type="password" name="old_password" placeholder="old_password" required/> </br>
+            <input type="password" name="new_password" placeholder="new_password" required/> </br>
+			<button type="submit" class="btn btn-primary">confirm reset</button>
+            <p style="color:red;">
+                <strong>Note</strong>: 
+                You will be required to log in again.
+            </p>
+            {% if message %}
+				<p class="text-success">{{message}}</p>
+			{% endif %}
+            {% if error %}
+				<p class="text-danger"><strong>Error:</strong> {{error}}</p>
+			{% endif %}
+		</form>
 	</div>
-
-	<h2>Account</h2>
-	<a href="/staff/home">Home</a> ||
-	<a href="/logout">Logout</a>
 
 </body>
 

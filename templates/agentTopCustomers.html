@@ -26,20 +26,202 @@
 <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 <!-- modern JS -->
-<script src="/js/modernizr-2.6.2.min.js"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
 </head>
 
 <body>
+
+	<div class="top-nav" style="text-align: right;">
+		<a href="/customer/home">Home</a> |
+		<a href="/logout">Logout</a>
+	</div>
 	
 	<div class="main">
-        <!-- bar chart with d3 -->
-	</div>
+		<h3>Hi, {{emailName}}!</h3>
 
-	<h2>Account</h2>
-	<a href="/staff/home">Home</a> ||
-	<a href="/logout">Logout</a>
-</body>
+		<style>
+			.bar{
+				fill: #0598aa;
+			}
+			.bar:hover{
+				fill: steelblue;
+				/* content: attr(num_tickets); */
+			}
+			.axis {
+				font: 10px sans-serif;
+			}
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: #000;
+				shape-rendering: crispEdges;
+			}
+		</style>
 
+        <h2 style="text-align: center;">Top Customers by Number of Tickets</h2>
+		<div class="topTickets">
+			<p>{{topTicketsData}}</p>
+
+			<script>
+				// set the dimensions of the canvas
+				var margin = {top: 20, right: 100, bottom: 70, left: 100},
+					width = 600 - margin.left - margin.right,
+					height = 300 - margin.top - margin.bottom;
+
+				// set the ranges
+				var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+				var y = d3.scale.linear().range([height, 0]);
+
+				// define the axis
+				var xAxis = d3.svg.axis()
+					.scale(x)
+					.orient("bottom")
+				var yAxis = d3.svg.axis()
+					.scale(y)
+					.orient("left")
+					.ticks(10);
+
+				// add the SVG element
+				var svg = d3.select("body").append("svg")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+				.append("g")
+					.attr("transform", 
+						"translate(" + margin.left + "," + margin.top + ")");
+				
+				// load the data
+				d3.json("{{url_for('static', filename='data/')}}{{'topTickets.json'}}",
+						//.post(JSON.stringify(customerSpending.json)),
+						function(error, data) {
+
+					data.forEach(function(d) {
+						d.customer = d.customer;
+						d.num_tickets = +d.num_tickets;
+					});
+					
+				// scale the range of the data
+				x.domain(data.map(function(d) { return d.customer; }));
+				y.domain([0, d3.max(data, function(d) { return d.num_tickets; })]);
+
+				// add axis
+				svg.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(xAxis)
+					.selectAll("text")
+					.style("text-anchor", "end")
+					.attr("dx", "-.8em")
+					.attr("dy", "-.55em")
+					.attr("transform", "rotate(-20)" );
+
+				svg.append("g")
+					.attr("class", "y axis")
+					.call(yAxis)
+					.append("text")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 5)
+					.attr("dy", "-3.5em") // ".71em"
+					.style("text-anchor", "end")
+					.text("# Tickets");
+
+
+				// Add bar chart
+				svg.selectAll("bar")
+					.data(data)
+					.enter().append("rect")
+					.attr("class", "bar")
+					.attr("x", function(d) { return x(d.customer); })
+					.attr("width", 50) // x.rangeBand()
+					.attr("y", function(d) { return y(d.num_tickets); })
+					.attr("height", function(d) { return height - y(d.num_tickets); });
+				});
+			</script>
+		</div>
+
+		<hr>
+
+		<h2 style="text-align: center;">Top Customers by Amount of Commission</h2>
+		<div class="topCommission">
+			<p>{{topCommissionData}}</p>
+
+			<script>
+				// set the dimensions of the canvas
+				var margin = {top: 20, right: 100, bottom: 70, left: 100},
+					width = 600 - margin.left - margin.right,
+					height = 300 - margin.top - margin.bottom;
+
+				// set the ranges
+				var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+				var y = d3.scale.linear().range([height, 0]);
+
+				// define the axis
+				var xAxis = d3.svg.axis()
+					.scale(x)
+					.orient("bottom")
+				var yAxis = d3.svg.axis()
+					.scale(y)
+					.orient("left")
+					.ticks(10);
+
+				// add the SVG element
+				var svg2 = d3.select("body").append("svg")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+				.append("g")
+					.attr("transform", 
+						"translate(" + margin.left + "," + margin.top + ")");
+				
+				// load the data
+				d3.json("{{url_for('static', filename='data/')}}{{'topCommission.json'}}",
+						//.post(JSON.stringify(customerSpending.json)),
+						function(error, data) {
+
+					data.forEach(function(d) {
+						d.customer = d.customer;
+						d.commission = +d.commission;
+					});
+					
+				// scale the range of the data
+				x.domain(data.map(function(d) { return d.customer; }));
+				y.domain([0, d3.max(data, function(d) { return d.commission; })]);
+
+				// add axis
+				svg2.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(xAxis)
+					.selectAll("text")
+					.style("text-anchor", "end")
+					.attr("dx", "-.8em")
+					.attr("dy", "-.55em")
+					.attr("transform", "rotate(-20)" );
+
+				svg2.append("g")
+					.attr("class", "y axis")
+					.call(yAxis)
+					.append("text")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 5)
+					.attr("dy", "-3.5em")
+					.style("text-anchor", "end")
+					.text("$ Commission");
+
+
+				// Add bar chart
+				svg2.selectAll("bar")
+					.data(data)
+					.enter().append("rect")
+					.attr("class", "bar")
+					.attr("x", function(d) { return x(d.customer); })
+					.attr("width", 50) 
+					.attr("y", function(d) { return y(d.commission); })
+					.attr("height", function(d) { return height - y(d.commission); });
+				});
+			</script>
+		</div>
+
+    </div>
+    
 </body>
 
 </html>

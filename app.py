@@ -1,34 +1,27 @@
 ### REQUIREMENTS ### (delete when complete)
-# 0. Public Functions: 
-# (1) Search for upcoming flights based on source city/airport name, destination city/airport name, date.
-# (2) Check flight status based on flight number, arrival/departure date.
-# 1. Customer: View My Flights 
-# 4. Customer: Track My Spending
-# 9. Agent: View Top Customers (@zoexiao0516)
-# 17. Staff: View Reports (@zoexiao0516)
-# 18. Staff: Compare Revenue (@zoexiao0516)
+# GRAPH PROBLEM: does not GET /static/data/data.json again when submitting
+# READ THIS: https://towardsdatascience.com/combining-python-and-d3-js-to-create-dynamic-visualization-applications-73c87a494396
+# 4. Customer: Track My Spending (PROBLEM)
+# 9. Agent: View Top Customers (PROBLEM)
+# 17. Staff: View Reports 
+# 18. Staff: Compare Revenue
 # 20. enforce constraints: e.g. customer can't create new flights
-# 21. booking_agent_id is it something the fill in when register or something we assign, 
-#   also what is its purpose if we are already identifying them uniquely through email?
 # 22. both agent and customer puts in email and password to login, 
 #   PROBLEM: I can go to booking agent login page and login as customer
 
 ### ADDITIONAL FEATURES ###
-# 4. forget and reset password
-# 5. delete account
 # 1. choose to book one-way or round-trip
 # 6. login, register should be one page with three views (not three separate pages)
-# 2. chatbot connects to booking agent to automatically book for you
-# 7. can only search for available dates (dates without flights would be dimmed)
-# 8. dark theme
-# 9. each user (customer, agent, staff) has their own path!
 # 10. after search results come out the search field keeps search input (UI)
+# 11. where you have been: map for customers
 
 # Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect, flash
+from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
 import mysql.connector
 import hashlib
 from datetime import datetime, date
+#from collections import defaultdict
+import json
 
 
 # Initialize the app from Flask (and reference templates!)
@@ -72,77 +65,88 @@ def check_injection(string_input):
 # All users, whether logged in or not, can view this page
 
 # 1. Search flights based on source city/airport name, destination city/airport name, date.
-@app.route('/search/searchFlight', methods=['GET', 'POST'])
+@app.route('/search/flight', methods=['GET', 'POST'])
 def searchFlight():
     departure_city = check_injection(request.form['departure_city'])
     departure_airport = check_injection(request.form['departure_airport'])
+    departure_time = request.form['departure_time']
     arrival_city = check_injection(request.form['arrival_city'])
     arrival_airport = check_injection(request.form['arrival_airport'])
-    departure_time = request.form['departure_time']
     arrival_time = request.form['arrival_time']
+    airline_name = request.form['airline_name']
+    price = request.form['price']
 
     cursor = conn.cursor()
     query = """
-        SELECT * \
-        FROM Flight, Airport \
+        SELECT airline_name, flight_num, 
+                departure_airport, Depart.airport_city, departure_time,
+                arrival_airport, Arrive.airport_city, arrival_time, 
+                status, price, num_tickets_left \
+        FROM flight, airport AS Depart, airport AS Arrive \
         WHERE departure_airport = if (\'{}\' = '', departure_airport, \'{}\') AND \
-            arrival_airport = if (\'{}\' = '', arrival_airport, \'{}\') AND \
-            status = 'upcoming' AND \
-            departure_city = if (\'{}\' = '', departure_city, \'{}\') AND \
-            arrival_city = if (\'{}\' = '', arrival_city, \'{}\') AND \
+            Depart.airport_city = if (\'{}\' = '', Depart.airport_city, \'{}\') AND \
+            Depart.airport_name = departure_airport AND \
             date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') \
+            arrival_airport = if (\'{}\' = '', arrival_airport, \'{}\') AND \
+            Arrive.airport_city = if (\'{}\' = '', Arrive.airport_city, \'{}\') AND \
+            Arrive.airport_name = arrival_airport AND \
+            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+            airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+            price <= if (\'{}\' = '', price, \'{}\') AND \
+            status = 'upcoming'
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (departure_airport, departure_airport, arrival_airport, arrival_airport, 
-                        departure_city, departure_city, arrival_city, arrival_city, 
-                        departure_time, departure_time, arrival_time, arrival_time))
+    cursor.execute(query.format(
+        departure_airport, departure_airport, departure_city, departure_city, departure_time, departure_time,
+        arrival_airport, arrival_airport, arrival_city, arrival_city, arrival_time, arrival_time,
+        airline_name, airline_name, price, price))
     data = cursor.fetchall()
     cursor.close()
 
     if data:
-        return render_template('Home.html', upcoming_flights=data)
+        return render_template('publicSearchFlights.html', upcoming_flights=data)
     else:
-        error = 'Sorry! We cannot find information about this flight.'
-        return render_template('Home.html', error1=error)
+        error = 'Sorry! This flight is not in our database.'
+        return render_template('index.html', error1=error)
 
 # 2. Search flights status based on flight number, arrival/departure date.
-@app.route('/search/searchStatus', methods=['GET', 'POST'])
+@app.route('/search/flightStatus', methods=['GET', 'POST'])
 def searchFlightStatus():
     airline_name = check_injection(request.form['airline_name'])
     flight_num = check_injection(request.form['flight_num'])
-    departure_time = request.form['departure_time']
-    arrival_time = request.form['arrival_time']
+    ticket_id = check_injection(request.form['ticket_id'])
 
     cursor = conn.cursor()
+    
     query = """
-        SELECT * \
-		FROM Flight \
-		WHERE flight_num = if (\'{}\' = '', flight_num, \'{}\') AND \
-            date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-            date(arrival_time) = if (\'{}\' = '', date(arrival_time), \'{}\') AND \
-            airline_name = if (\'{}\' = '', airline_name, \'{}\') \
+        SELECT ticket_id, airline_name, flight_num, status,
+            departure_airport, Depart.airport_city, departure_time,
+            arrival_airport, Arrive.airport_city, arrival_time \
+		FROM flight NATURAL JOIN ticket, airport AS Depart, airport AS Arrive \
+		WHERE Depart.airport_name = departure_airport AND \
+            Arrive.airport_name = arrival_airport AND \
+            flight_num = if (\'{}\' = '', flight_num, \'{}\') AND \
+            airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+            ticket_id = if (\'{}\' = '', ticket_id, \'{}\') \
 		ORDER BY airline_name, flight_num
         """
-    cursor.execute(query, (flight_num, flight_num, 
-            arrival_time, arrival_time, departure_time, departure_time, 
-            airline_name, airline_name))
+    cursor.execute(query.format(
+        flight_num, flight_num, airline_name, airline_name, ticket_id, ticket_id))
     data = cursor.fetchall() 
     cursor.close()
     
-    if data: # has info
-        return render_template('Home.html', statuses=data)
-    else: # no info
+    if data:
+        return render_template('publicSearchFlightStatus.html', flight_statuses=data)
+    else:
         error = 'Sorry! We cannot find information about this flight.'
-        return render_template('Home.html', error2=error)
+        return render_template('index.html', error2=error)
 
+
+### ------- User Type Account Settings ----------
 
 # -------- Three Types of Registration -----------
-# Note that password needs to be hashed before saving to database
+# Password is hashed before saving to database
 
-# PROBLEM: with the current template, i don't know which date is birthday and which date is passport expiration
-# PROBLEM: right now we have three seperate pages for registration and login
-#           make it one page with three tab views
 # @app.route('/register')
 # def register():
 #     return render_template('register.html')
@@ -356,12 +360,196 @@ def loginStaffAuth():
         return render_template('loginStaff.html', error=error)
 
 
-# -------- Three Types of Users Logout -----------
+# -------- Logout Function -----------
 @app.route('/logout')
 def logout():
     session.clear() #session.pop('username')
     return redirect('/')
 
+
+# -------- Three Types of Users Delete Account -----------
+
+# @app.route('/deleteAccount')
+# def deleteAccount():
+#     session.clear()
+#     return redirect('/')
+
+@app.route('/deleteAccount/customer')
+def deleteAccountCustomer():
+    return render_template('deleteCustomer.html')
+
+@app.route('/deleteAccount/agent')
+def deleteAccountAgent():
+    return render_template('deleteAgent.html')
+
+@app.route('/deleteAccount/staff')
+def deleteAccountStaff():
+    return render_template('deleteStaff.html')
+
+# 1. Customer Delete Account Authentication
+@app.route('/deleteAccount/customer/auth', methods=['GET', 'POST'])
+def deleteAccountCustomerAuth():
+    if 'email' in request.form and 'password' in request.form:
+        email =check_injection(request.form['email'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM customer WHERE email = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+        
+        message = 'Your account is successfully deleted. We are sorry to see you go!'
+        return render_template('deleteCustomer.html', message=message)
+        
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 2. Booking Agent Delete Account Authentication
+@app.route('/deleteAccount/agent/auth', methods=['GET', 'POST'])
+def deleteAccountAgentAuth():
+    if 'email' in request.form and 'password' in request.form:
+        email =check_injection(request.form['email'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM bookingAgent WHERE email = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(email, hashlib.md5(password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+        
+        message = 'Your account is successfully deleted.'
+        return render_template('deleteAgent.html', message=message)
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 3. Airline Staff Delete Account Authentication
+@app.route('/deleteAccount/staff/auth', methods=['GET', 'POST'])
+def deleteAccountStaffAuth():
+    if 'username' in request.form and 'password' in request.form:
+        username =check_injection(request.form['username'])
+        password = request.form['password']
+        
+        cursor = conn.cursor()
+        query = "DELETE FROM airlineStaff WHERE username = \'{}\' and password = md5(\'{}\')"
+        cursor.execute(query.format(username, hashlib.md5(password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+        
+        message = 'Your account is successfully deleted.'
+        return render_template('deleteStaff.html', message=message)
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# -------- Three Types of Users Reset Password -----------
+
+@app.route('/resetPassword/customer')
+def resetPasswordCustomer():
+    return render_template('resetCustomer.html')
+
+@app.route('/resetPassword/agent')
+def resetPasswordAgent():
+    return render_template('resetAgent.html')
+
+@app.route('/resetPassword/staff')
+def resetPasswordStaff():
+    return render_template('resetStaff.html')
+
+# 1. Customer Reset Password Authentication
+@app.route('/resetPassword/customer/auth', methods=['GET', 'POST'])
+def resetPasswordCustomerAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        email =check_injection(request.form['email'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        cursor = conn.cursor()
+        query = """
+            UPDATE customer
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            email, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginCustomer.html', message=message)
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 2. Agent Reset Password Authentication
+@app.route('/resetPassword/agent/auth', methods=['GET', 'POST'])
+def resetPasswordAgentAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        email =check_injection(request.form['email'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        cursor = conn.cursor()
+        query = """
+            UPDATE bookingAgent
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            email, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+        
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginAgent.html', message=message)
+
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# 3. Staff Reset Password Authentication
+@app.route('/resetPassword/staff/auth', methods=['GET', 'POST'])
+def resetPasswordStaffAuth():
+    if ('email' in request.form) and \
+        ('old_password' in request.form) and \
+        ('new_password' in request.form):
+        username =check_injection(request.form['username'])
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+        
+        cursor = conn.cursor()
+        query = """
+            UPDATE airlineStaff
+            SET password = md5(\'{}\')
+            WHERE email = \'{}\' AND password = md5(\'{}\')"""
+        cursor.execute(query.format(
+            hashlib.md5(new_password.encode()).hexdigest(),
+            username, 
+            hashlib.md5(old_password.encode()).hexdigest()))
+        conn.commit()
+        cursor.close()
+        
+        message = 'Your password is successfully changed. Please log in again.'
+        return render_template('loginStaff.html', message=message)
+
+    else:
+        session.clear()
+        return render_template('404.html')
+
+
+### ------- User Type Exclusive Use Cases -------
 
 # -------- Customer Exlusive Use Cases -----------
 # 1. Customer Homepage
@@ -437,11 +625,13 @@ def customerSearchFlights():
         email = check_injection(session['email'])
         departure_city = check_injection(request.form['departure_city'])
         departure_airport = check_injection(request.form['departure_airport'])
-        departure_date = request.form['departure_date']
+        departure_time = request.form['departure_time']
         arrival_city = check_injection(request.form['arrival_city'])
         arrival_airport = check_injection(request.form['arrival_airport'])
-        arrival_date = request.form['arrival_date']
-        
+        arrival_time = request.form['arrival_time']
+        airline_name = request.form['airline_name']
+        price = request.form['price']
+
         cursor = conn.cursor()
         query = "SELECT name FROM customer WHERE email = \'{}\'"
         cursor.execute(query.format(email))
@@ -464,12 +654,16 @@ def customerSearchFlights():
                 Arrive.airport_name = arrival_airport AND \
                 arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
                 date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+                airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+                price <= if (\'{}\' = '', price, \'{}\') \
             ORDER BY airline_name, flight_num
             """
-        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
-                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
-                    departure_date, departure_date, arrival_date, arrival_date))
+        cursor.execute(query.format(
+            departure_city, departure_city, departure_airport, departure_airport, 
+            arrival_city, arrival_city, arrival_airport, arrival_airport, 
+            departure_time, departure_time, arrival_time, arrival_time,
+            airline_name, airline_name, price, price))
         data = cursor.fetchall()
         cursor.close()
         
@@ -530,77 +724,102 @@ def customerPurchaseTicket():
         return render_template('404.html')
 
 # 4. Customer Track Spending
-# Default view will be total amount of money spent in the past year 
-# and a bar chart showing month-wise money spent for last 6 months. 
+# Default view will be :
+# (1) total amount of money spent in the past year 
+# (2) a bar chart showing month-wise money spent for last 6 months. 
 # Customer will also have option to specify a range of dates to view total amount of money 
 # spent within that range and a bar chart showing month-wise money spent within that range.
 @app.route('/customer/spending', methods=['POST', 'GET'])
 def trackSpending():
-	if session.get('email'):
-		email = check_injection(session['email'])
+    if session.get('email'):
+        email = check_injection(session['email'])
+        
+        cursor = conn.cursor()
+        query0 = "SELECT name FROM customer WHERE email = \'{}\'"
+        cursor.execute(query0.format(email))
+        username = cursor.fetchone()
+        username = str(username)[2:-3]
+        cursor.close()
 
 		# (1) show total spending in the past year or specified duration
-		duration = request.form.get("duration")
-		if duration is None:
-			duration = "365"
-		cursor = conn.cursor()
-		query = """
-            SELECT SUM(price)\
+        duration = request.form.get("duration")
+        if duration is None:
+            duration = "365"
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT SUM(price) \
             FROM customer_spending \
             WHERE customer_email = \'{}\' AND \
                 (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())"""
-		cursor.execute(query.format(email, duration))
-		total_spending_data = cursor.fetchone()
-		cursor.close()
+        cursor.execute(query.format(email, duration))
+        total_spending_data = cursor.fetchone()
+        cursor.close()
 
 		# (2) show month-wise spending in the past 6 months
-		period = request.form.get("period")
-		if period is None:
-			period = '6'
-		today = datetime.date.today()
-		past_day = today.day
-		past_month = (today.month - int(period)) % 12
-		if past_month == 0:
-			past_month = 12
-		past_year = today.year + ((today.month - int(period) - 1) // 12)
-		past_date = datetime.date(past_year, past_month, past_day) # the day 6 months ago
-
-		cursor = conn.cursor()
-		query2 = """
+        period = request.form.get("period")
+        if period is None:
+            period = "6"
+        today = date.today()
+        past_day = today.day
+        past_month = (today.month - int(period)) % 12
+        if past_month == 0:
+            past_month = 12
+        past_year = today.year + ((today.month - int(period) - 1) // 12)
+        past_date = date(past_year, past_month, past_day)
+        
+        cursor = conn.cursor()
+        query2 = """
             SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, \
                 SUM(price) AS monthly_spending \
             FROM customer_spending \
             WHERE customer_email = \'{}\' AND purchase_date >= \'{}\' \
             GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
-		cursor.execute(query2.format(email, past_date))
-		monthly_spending_data = cursor.fetchall()
-		cursor.close()
+        cursor.execute(query2.format(email, past_date))
+        monthly_spending_data = cursor.fetchall()
+        cursor.close()
+        
+        customerSpendingData = []
+        for i in range(1, int(period)+1):
+            monthlyDataDict = dict()
+            month = (past_date.month + i) % 12
+            if month == 0:
+                month = 12
+            year = past_date.year + ((past_date.month + i - 1) // 12)
+            monthlyDataDict["time"] = f'{year}/{month}'
+            monthlyDataDict["spending"] = 0
 
-		months = []
-		monthly_spendings = []
-		for i in range(int(period)):
-			month = (past_date.month + i + 1) % 12
-			if month == 0:
-				month = 12
-			year = past_date.year + ((past_date.month + i) // 12)
-			flag = False
-			for one_month in monthly_spending_data:
-				if one_month[0] == year and one_month[1] == month:
-					flag = True
-					break
-			if flag:
-				monthly_spendings.append(int(one_month[2]))
-			else:
-				monthly_spendings.append(0)
-			months.append(str(year)+'-'+str(month))
+            for spendingData in monthly_spending_data:
+                if (spendingData[0]==year) and (spendingData[1]==month):
+                    monthlyDataDict["spending"] = int(spendingData[2])
+            customerSpendingData.append(monthlyDataDict)
+        
+        # # dump data to json
+        # customerSpendingData = json.dumps(customerSpendingData)
+        # # save to dataStore
+        # data.customerSpendingData = json.loads(customerSpendingData)
+        # # save to temporary variable
+        # customerSpendingData=data.customerSpendingData
 
-		return render_template('customerSpending.html', email=email, emailName=email.split('@')[0], \
-            total_spending_data=total_spending_data[0], duration=duration, period=period, \
-            months=months, monthly_spendings=monthly_spendings)
-	else:
-		session.clear()
-		return render_template('404.html')
+        with open("static/data/customerSpending.json", "w") as outputFile: 
+            json.dump(customerSpendingData, outputFile)
 
+        return render_template('customerSpending.html', email=email, username=username,
+            total_spending_data=total_spending_data[0], duration=duration, period=period,
+            customerSpendingData=customerSpendingData)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
+
+# class dataStore():
+#      customerSpendingData= None
+# data=dataStore()
+
+# @app.route("/get-data", methods=["GET", "POST"])
+# def returnSpendingData():
+#     f = data.customerSpendingData
+#     return jsonify(f)
 
 # ------- Booking Agent Exclusive Functions --------
 # 0. Booking Agent Homepage
@@ -716,10 +935,12 @@ def agentSearchFlights():
         email = check_injection(session['email'])
         departure_city = check_injection(request.form['departure_city'])
         departure_airport = check_injection(request.form['departure_airport'])
-        departure_date = request.form['departure_date']
+        departure_time = request.form['departure_time']
         arrival_city = check_injection(request.form['arrival_city'])
         arrival_airport = check_injection(request.form['arrival_airport'])
-        arrival_date = request.form['arrival_date']
+        arrival_time = request.form['arrival_time']
+        airline_name = request.form['airline_name']
+        price = request.form['price']
         
         cursor = conn.cursor()
         query = "SELECT email from bookingAgent where email = \'{}\'"
@@ -746,12 +967,16 @@ def agentSearchFlights():
                 Arrive.airport_name = arrival_airport AND \
                 arrival_airport =  if (\'{}\' = '', arrival_airport, \'{}\') AND \
                 date(departure_time) = if (\'{}\' = '', date(departure_time), \'{}\') AND \
-                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') \
+                date(arrival_time) =  if (\'{}\' = '', date(arrival_time), \'{}\') AND \
+                airline_name = if (\'{}\' = '', airline_name, \'{}\') AND \
+                price <= if (\'{}\' = '', price, \'{}\')
             ORDER BY airline_name, flight_num
             """
-        cursor.execute(query.format(departure_city, departure_city, departure_airport, departure_airport, 
-                    arrival_city, arrival_city, arrival_airport, arrival_airport, 
-                    departure_date, departure_date, arrival_date, arrival_date))
+        cursor.execute(query.format(
+            departure_city, departure_city, departure_airport, departure_airport, 
+            arrival_city, arrival_city, arrival_airport, arrival_airport, 
+            departure_time, departure_time, arrival_time, arrival_time,
+            airline_name, airline_name, price, price))
         data = cursor.fetchall()
         cursor.close()
         
@@ -777,20 +1002,20 @@ def agentCommission():
         email = check_injection(session['email'])
         duration = request.form.get("duration")
 
-        custom_duration = request.form.get("custom_duration")
-        if custom_duration is not None:
-            custom_duration = custom_duration
-        query = """
-            SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
-            FROM agent_commission 
-            WHERE email = \'{}\' AND \
-                (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())
-            """
-        cursor = conn.cursor()  
-        cursor.execute(query.format(email, custom_duration))
-        commission_data = cursor.fetchone()
-        total_commission, avg_commission, num_ticket = commission_data
-        cursor.close()
+        # custom_duration = request.form.get("custom_duration")
+        # if custom_duration is not None:
+        #     custom_duration = custom_duration
+        # query = """
+        #     SELECT SUM(ticket_price * 0.1), AVG(ticket_price * 0.1), COUNT(ticket_price * 0.1) \
+        #     FROM agent_commission 
+        #     WHERE email = \'{}\' AND \
+        #         (purchase_date BETWEEN DATE_ADD(NOW(), INTERVAL -\'{}\' DAY) and NOW())
+        #     """
+        # cursor = conn.cursor()  
+        # cursor.execute(query.format(email, custom_duration))
+        # commission_data = cursor.fetchone()
+        # total_commission, avg_commission, num_ticket = commission_data
+        # cursor.close()
 
         if duration is None:
             duration = "30"
@@ -808,7 +1033,7 @@ def agentCommission():
         
         return render_template('agentCommission.html', email=email, emailName=email.split('@')[0],
             total_commission=total_commission, avg_commission=avg_commission,
-            num_ticket=num_ticket, duration=duration, custom_duration=custom_duration)
+            num_ticket=num_ticket, duration=duration)#, custom_duration=custom_duration)
     
     else:
         session.clear()
@@ -821,59 +1046,87 @@ def agentCommission():
 # Show another bar chart showing each of these 5 customers in x-axis and amount commission received in y- axis.
 @app.route('/agent/topCustomers')
 def agentTopCustomers():
-	if session.get('email'):
-		email = check_injection(session['email'])
+    if session.get('email'):
+        email = check_injection(session['email'])
 
-		cursor = conn.cursor()
-		query = """
+        # (1) by number of tickets (last 6 months)
+        cursor = conn.cursor()
+        query = """
             SELECT customer_email, COUNT(ticket_id) \
             FROM agent_commission 
             WHERE email = \'{}\' AND \
                 DATEDIFF(CURDATE(), DATE(purchase_date)) < 183 \
             GROUP BY customer_email \
             ORDER BY COUNT(ticket_id) DESC"""
-		cursor.execute(query.format(email))
-		ticket_data = cursor.fetchall()
-		cursor.close()
-
-		ticket_length = len(ticket_data)
-		if ticket_length >= 5:
-			customer1 = [ticket_data[i][0] for i in range(5)]
-			tickets = [ticket_data[i][1] for i in range(5)]
-		else:
-			customer1 = [ticket_data[i][0] for i in range(ticket_length)]
-			tickets = [ticket_data[i][1] for i in range(ticket_length)]
-			for _ in range(5 - ticket_length):
-				customer1.append(' ')
-				tickets.append(0)
+        cursor.execute(query.format(email))
+        ticket_data = cursor.fetchall()
+        cursor.close()
+        
+        topTicketsData = []
+        ticket_length = len(ticket_data)
+        if ticket_length >= 5:
+            for i in range(5):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=ticket_data[i][0]
+                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
+                topTicketsData.append(ticketDataDict)
+        else:
+            for i in range(ticket_length):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=ticket_data[i][0]
+                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
+                topTicketsData.append(ticketDataDict)
+            for _ in range(5 - ticket_length):
+                ticketDataDict = dict()
+                ticketDataDict["customer"]=' '
+                ticketDataDict["num_tickets"]=0
+                topTicketsData.append(ticketDataDict)
 		
-		cursor = conn.cursor()
-		query2 = """
-            SELECT customer_email, SUM(ticket_price) * 0.1 \
+        # (2) by amount of commission (last year)
+        cursor = conn.cursor()
+        query2 = """
+            SELECT customer_email, SUM(ticket_price)*0.1 \
             FROM agent_commission 
             WHERE email = \'{}\' AND \
-                DATEFIFF(CURDATE(), DATE(purchase_date)) < 365 \
+                DATEDIFF(CURDATE(), DATE(purchase_date)) < 365 \
             GROUP BY customer_email \
             ORDER BY SUM(ticket_price) DESC"""
-		cursor.execute(query2.format(email))
-		commission_data = cursor.fetchall()
-		cursor.close()
+        cursor.execute(query2.format(email))
+        commission_data = cursor.fetchall()
+        cursor.close()
+        
+        topCommissionData = []
+        commission_length = len(commission_data)
+        if commission_length >= 5:
+            for i in range(5):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=commission_data[i][0]
+                commissionDataDict["commission"]=int(commission_data[i][1])
+                topCommissionData.append(commissionDataDict)
+        else:
+            for i in range(commission_length):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=commission_data[i][0]
+                commissionDataDict["commission"]=int(commission_data[i][1])
+                topCommissionData.append(commissionDataDict)
+            for _ in range(5 - commission_length):
+                commissionDataDict = dict()
+                commissionDataDict["customer"]=' '
+                commissionDataDict["commission"]=0
+                topCommissionData.append(commissionDataDict)
+        
+        with open("static/data/topTickets.json", "w") as outputFile: 
+            json.dump(topTicketsData, outputFile)
+        
+        with open("static/data/topCommission.json", "w") as outputFile: 
+            json.dump(topCommissionData, outputFile)
 
-		commission_length = len(commission_data)
-		if commission_length >= 5:
-			customer2 = [commission_data[i][0] for i in range(5)]
-			commissions = [commission_data[i][1] for i in range(5)]
-		else:
-			customer2 = [commission_data[i][0] for i in range(commission_length)]
-			commissions = [int(commission_data[i][1]) for i in range(commission_length)]
-			for _ in range(5 - ticket_length):
-				customer2.append(' ')
-				commissions.append(0)
-		return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0], \
-            customer1=customer1, customer2=customer2, tickets=tickets, commissions=commissions)
-	else:
-		session.clear()
-		return render_template('404.html')
+        return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0],
+            topTicketsData=topTicketsData, topCommissionData=topCommissionData)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 
 # ------ Airline Staff Exclusive Functions -------

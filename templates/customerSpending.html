@@ -1,35 +1,246 @@
+<!DOCTYPE html>
 <html>
+
 <head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Track Spending</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- favicons -->
+<link href="/images/favicon.png" rel="icon" />
+<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />
+
+<!-- fonts -->
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/css/animate.css">
+<link rel="stylesheet" type="text/css" href="/css/icomoon.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/css/superfish.css">
+<link rel="stylesheet" type="text/css" href="/css/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-select.css">
+<link rel="stylesheet" type="text/css" href="/css/cs-skin-border.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<!-- modern JS -->
+<script src="https://d3js.org/d3.v3.min.js"></script>
 </head>
+
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="your post" required/> </br>
-	<input type="submit" value = Post />
-</form>
 
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-</style>
+	<div class="top-nav" style="text-align: right;">
+		<a href="/customer/home">Home</a> |
+		<a href="/logout">Logout</a>
+	</div>
+	
+	<div class="main">
+		<h3>Hi, {{username}}!</h3>
+        <!-- <h2>Track Your Spending</h2> -->
+        
+		<div style="text-align: center;">
+            <h2>
+                Total Spending:
+                {% if total_spending_data %}
+                <td>${{total_spending_data}}</td>
+                {% else %}
+                <td>$0</td>
+                {% endif %}
+            </h2>
+			
+			<form action="/customer/spending" method="POST">
+				<label for="duration">Spending since</label>
+				<select name="duration" required>
+					{% if duration == "7" %}
+					<option value="7" selected="selected">last week</option>
+					{% else %}
+					<option value="7">last week</option>
+					{% endif %}
 
-<table>
-	<th>Time</th>
-	<th>Post</th>
+					{% if duration == "30" %}
+					<option value="30" selected="selected">last month</option>
+					{% else %}
+					<option value="30">last month</option>
+					{% endif %}
 
-{% for line in posts %}
-	<tr>
-		<td>{{line[0]}}</td>
-		<td>{{line[1]}}</td>
-		
-	</tr>
-{% endfor %}
-</table>
+					{% if duration == "91" %}
+					<option value="91" selected="selected">last quarter</option>
+					{% else %}
+					<option value="91">last quarter</option>
+					{% endif %}
 
-<a href="/logout">Logout</a>
+					{% if duration == "365" %}
+					<option value="365" selected="selected">last year</option>
+					{% else %}
+					<option value="365">last year</option>
+					{% endif %}
 
+					{% if duration == "1825" %}
+					<option value="1825" selected="selected">last 5 years</option>
+					{% else %}
+					<option value="1825">last 5 years</option>
+					{% endif %}
+
+					{% if duration == "10000" %}
+					<option value="10000" selected="selected">all time</option>
+					{% else %}
+					<option value="10000">all time</option>
+					{% endif %}
+				</select>
+				<button type="submit" class="btn btn-primary">submit</button>
+			</form>
+            
+			<hr>
+            
+            <h2>Month-wise Spending</h2>
+
+			<form action="/customer/spending" method="POST">
+				<label for="period">Spending since</label>
+				<select name="period" required>
+					{% if period == "3" %}
+					<option value="3" selected="selected">last quarter</option>
+					{% else %}
+					<option value="3">last quarter</option>
+					{% endif %}
+					
+					{% if period == "6" %}
+					<option value="6" selected="selected">last half-year</option>
+					{% else %}
+					<option value="6">last half-year</option>
+					{% endif %}
+
+					{% if period == "12" %}
+					<option value="12" selected="selected">last year</option>
+					{% else %}
+					<option value="12">last year</option>
+					{% endif %}
+
+					{% if period == "36" %}
+					<option value="36" selected="selected">last 3 years</option>
+					{% else %}
+					<option value="36">last 3 years</option>
+					{% endif %}
+
+					{% if period == "60" %}
+					<option value="60" selected="selected">last 5 years</option>
+					{% else %}
+					<option value="60">last 5 years</option>
+					{% endif %}
+
+					{% if period == "1000" %}
+					<option value="1000" selected="selected">all time</option>
+					{% else %}
+					<option value="1000">all time</option>
+					{% endif %}
+				</select>
+				<button type="submit" class="btn btn-primary">submit</button>
+			</form>
+
+			<div class="customerSpending">
+				<p>{{customerSpendingData}}</p>
+
+				<style>
+					.bar{
+						fill: #0598aa;
+					}
+					.bar:hover{
+						fill: steelblue;
+						/* content: attr(spending); */
+					}
+					.axis {
+						font: 10px sans-serif;
+					}
+					.axis path,
+					.axis line {
+						fill: none;
+						stroke: #000;
+						shape-rendering: crispEdges;
+					}
+				</style>
+
+				<script action="/customer/spending" method="GET">
+					// set the dimensions of the canvas
+					var margin = {top: 20, right: 100, bottom: 70, left: 100},
+						width = 600 - margin.left - margin.right,
+						height = 300 - margin.top - margin.bottom;
+
+					// set the ranges
+					var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+					var y = d3.scale.linear().range([height, 0]);
+
+					// define the axis
+					var xAxis = d3.svg.axis()
+						.scale(x)
+						.orient("bottom")
+					var yAxis = d3.svg.axis()
+						.scale(y)
+						.orient("left")
+						.ticks(10);
+
+					// add the SVG element
+					var svg = d3.select("body").append("svg")
+						.attr("width", width + margin.left + margin.right)
+						.attr("height", height + margin.top + margin.bottom)
+					.append("g")
+						.attr("transform", 
+							"translate(" + margin.left + "," + margin.top + ")");
+					
+					// load the data
+					d3.json("{{url_for('static', filename='data/')}}{{'customerSpending.json'}}",
+							//.post(JSON.stringify(customerSpending.json)),
+							function(error, data) {
+
+						data.forEach(function(d) {
+							d.time = d.time;
+							d.spending = +d.spending;
+						});
+						
+					// scale the range of the data
+					x.domain(data.map(function(d) { return d.time; }));
+					y.domain([0, d3.max(data, function(d) { return d.spending; })]);
+
+					// add axis
+					svg.append("g")
+						.attr("class", "x axis")
+						.attr("transform", "translate(0," + height + ")")
+						.call(xAxis)
+						.selectAll("text")
+						.style("text-anchor", "end")
+						.attr("dx", "-.8em")
+						.attr("dy", "-.55em")
+						.attr("transform", "rotate(-60)" );
+
+					svg.append("g")
+						.attr("class", "y axis")
+						.call(yAxis)
+						.append("text")
+						.attr("transform", "rotate(-90)")
+						.attr("y", 5)
+						.attr("dy", ".71em")
+						.style("text-anchor", "end")
+						.text("$ Spending");
+
+
+					// Add bar chart
+					svg.selectAll("bar")
+						.data(data)
+						.enter().append("rect")
+						.attr("class", "bar")
+						.attr("x", function(d) { return x(d.time); })
+						.attr("width", x.rangeBand())
+						.attr("y", function(d) { return y(d.spending); })
+						.attr("height", function(d) { return height - y(d.spending); });
+
+					});
+					
+				</script>
+			</div>
+
+		</div>
+    </div>
+    
 </body>
-
 
 </html>

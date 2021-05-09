@@ -30,6 +30,11 @@
 </head>
 
 <body>
+
+	<div class="top-nav" style="text-align: right;">
+		<a href="/agent/home">Home</a> |
+		<a href="/logout">Logout</a>
+	</div>
 	
 	<div class="main">
         <h2>{{emailName}}'s Commission</h2>
@@ -72,12 +77,12 @@
 				<option value="10000">all time</option>
 				{% endif %}
 				
-				{% if duration == "custom_duration" %}
+				<!-- {% if duration == "custom_duration" %}
 				<option value={{custom_duration}}" selected="selected">custom duration</option>
 				{% else %}
 				<option value={{custom_duration}}>custom duration</option>
 				<input type="number" name = "custom_duration" placeholder="custom_duration"/>
-				{% endif %}
+				{% endif %} -->
 			</select>
 			<button type="submit" class="btn btn-primary">search</button>
 		</form>
@@ -112,10 +117,6 @@
 			</tbody>
 		</table>
 	</div>
-
-	<h2>Account</h2>
-	<a href="/agent/home">Home</a> ||
-	<a href="/logout">Logout</a>
 
 </body>
 
