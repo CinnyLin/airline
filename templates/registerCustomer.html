@@ -29,13 +29,24 @@
 <script src="/js/modernizr-2.6.2.min.js"></script>
 </head>
 
+<style>
+	div {
+	padding: 5px;
+	margin: 5px;
+	}
+</style>
+
 <body>
 	<div class="top-nav" style="text-align: right;">
+		<a href="/">
+			<img alt="Home" src="/images/favicon.png" width="20" height="20"/>
+		</a>
 		<a href="/">Home</a> |
 		<a href="/login">Users Login</a>
 	</div>
 
 	<div class="main" style="text-align: center;">
+		<h3>Customer Register</h3>
 		<form action="/register/customer/auth" method="POST">
 			<label>Email:</label><input type="text" name = "email" placeholder="email" required/></br>
 			<label>Username:</label><input type="text" name = "name" placeholder="username" required/></br>
