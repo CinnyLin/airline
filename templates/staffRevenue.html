@@ -35,11 +35,34 @@
 		<a href="/staff/home">Home</a> |
 		<a href="/logout">Logout</a>
 	</div>
+
+    <form action="/staff/earningsReport" method="POST">
+        <select name="period">
+            {% if period == "1" %}
+            <option value="1" selected="selected">last quarter</option>
+            {% else %}
+            <option value="1">last month</option>
+            {% endif %}
+
+            {% if period == "12" %}
+            <option value="12" selected="selected">last year</option>
+            {% else %}
+            <option value="12">last year</option>
+            {% endif %}
+
+        </select>
+
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if ferror %}
+        <p class="text-danger"><strong>Sorry:</strong> {{ferror}}</p>
+        {% endif %}
+    </form>
 	
 	<div class="main">
         {% if posts %}
             </br>
             <h2>View Revenue Earned for <strong>{{posts[0][1]}}</strong></h2>
+
         {% else %}
             <h2>View Revenue Earned</h2>
         {% endif %}

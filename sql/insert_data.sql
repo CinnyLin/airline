@@ -105,7 +105,7 @@ INSERT INTO airplane VALUES
 --
 
 INSERT INTO airport VALUES
--- ("JFK", "New York"), ("PVG", "Shanghai"), -- front-end test
+("JFK", "New York"), ("PVG", "Shanghai"), -- front-end test
 ("CMN", "Cascablanca"), ("AUH", "Abu Dhabi"), -- Air Arabia
 ("PEK", "Beijing"), ("CAN", "Guangzhou"), ("SHA", "Shanghai"), -- Air China, China Airlines, China Eastern, China Southern
 ("LHR", "London"), ("AMS", "Amsterdam"), ("CDG", "Paris"), 
@@ -159,7 +159,6 @@ INSERT INTO flight VALUES
 ("Air Arabia", 10130, "AUH", "2021-05-30 15:20", "LAX", "2021-05-31 20:20", 1000, "in-progress", 130, 100),
 ("Air Arabia", 10131, "AUH", "2021-05-30 15:20", "DTW", "2021-05-31 20:20", 1000, "upcoming", 131, 100),
 ("Air Arabia", 10150, "AUH", "2021-05-30 15:20", "HKG", "2021-05-31 23:20", 1500, "delayed", 150, 100),
-
 
 -- European Airlines/Airports
 ("Air France", 20100, "CDG", "2021-05-30 15:20", "LHR", "2021-05-30 17:20", 500, "in-progress", 100, 100),
@@ -233,7 +232,7 @@ INSERT INTO flight VALUES
 --
 
 INSERT INTO ticket VALUES
--- (1, "EVA Air", 50100), -- front-end test
+(1, "EVA Air", 50100), -- front-end test
 (2, "China Eastern", 54120);
 
 -- --------------------------------------------------------

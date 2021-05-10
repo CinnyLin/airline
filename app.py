@@ -3,8 +3,8 @@
 # READ THIS: https://towardsdatascience.com/combining-python-and-d3-js-to-create-dynamic-visualization-applications-73c87a494396
 # 4. Customer: Track My Spending (PROBLEM)
 # 9. Agent: View Top Customers (PROBLEM)
-# 17. Staff: View Reports 
-# 18. Staff: Compare Revenue
+# 17. Staff: View Ticket Reports 
+# 18. Staff: View Earnings/Revenue Reports
 
 ### ADDITIONAL FEATURES ###
 # 6. login, register should be one page with three views (not three separate pages)
@@ -31,8 +31,8 @@ app = Flask(__name__,
 # for Zoe: need password, database name is "air"
 conn = mysql.connector.connect(host='localhost',
                                user='root',
-                               #password='password',  # comment out this line if not needed
-                               database='airline',
+                               password='password',  # comment out this line if not needed
+                               database='sys',
                                port=3306)
 
 
@@ -1585,52 +1585,75 @@ def staffFlightCustomer():
 # Month-wise tickets sold in a bar chart.
 # PROBLEM: not sure how to write this one
 @app.route('/staff/ticketReport', methods=['GET', 'POST'])
-def staffticketReport():
+def staffTicketReport():
     if session.get('username'):
-        username = check_injection(session['username'])
-        # airline = session[username][1]
-        startTime = check_injection(request.form['StartTime'])
-        endTime = check_injection(request.form['EndTime'])
-
-        cursor = conn.cursor()
-        query0 = "SELECT airlinename FROM airlineStaff WHERE username=\'{}\'"
-        cursor.execute(query0.format(username))
-        airline = cursor.fetchone()
-
-        cursor = conn.cursor()
-        query = """
-            SELECT COUNT(purchase.ticket_id), YEAR(purchase_date), MONTH(purchase_date) \
-            FROM purchase, flight, ticket \
-            WHERE purchase.ticket_id = ticket.ticket_id AND ticket.airline_name = flight.airline_name \
-                AND ticket.flight_num = flight.flight_num AND flight.airline_name = '{}' \
-                AND purchase_date >= '{}' and purchase_date <= '{}' \
-            GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
-        cursor.execute(query.format(airline, startTime, endTime))
-        data = cursor.fetchall()
-
-        rows_dict = {}
-        startDate = datetime.strptime(startTime, '%Y-%m-%d')
-        endDate = datetime.strptime(endTime, '%Y-%m-%d')
-        year = startDate.year
-        month = startDate.month
-        while year <= endDate.year:
-            if year == endDate.year and month == endDate.month+1:
-                break
-            if month <= 12:
-                rows_dict[str(year)+"/"+str(month)] = 0
-                month += 1
-            else:
-                year += 1
-                month = 1
+        if request.method == 'POST':
+            username = check_injection(session['username'])
         
-        staffReportData = []
-        for i in data:
-            monthlyDataDict = dict()
-            monthlyDataDict["time"] = str(i[1])+"/"+str(i[2])
-            monthlyDataDict["num_tickets"] = i[0]
-            staffReportData.append(monthlyDataDict)
-        cursor.close()
-        return render_template('staffReports.html', username=username, posts=staffReportData)
+            cursor = conn.cursor()
+            query0 = "SELECT airline_name FROM airlineStaff WHERE username=\'{}\'"
+            # print(query0.format(username))
+            cursor.execute(query0.format(username))
+            airline = cursor.fetchone()[0]
+            cursor.close()
+
+            # (1) show total tickets sold in specified time range
+            startTime = request.form.get('start_time')
+            endTime = request.form.get('end_time')
+
+            cursor = conn.cursor()
+            query = """
+                SELECT COUNT(purchase.ticket_id), YEAR(purchase_date), MONTH(purchase_date) \
+                FROM purchase, flight, ticket \
+                WHERE purchase.ticket_id = ticket.ticket_id AND ticket.airline_name = flight.airline_name \
+                    AND ticket.flight_num = flight.flight_num AND flight.airline_name = \'{}\' \
+                    AND date(purchase_date) >= \'{}\' AND date(purchase_date) <= \'{}\' \
+                GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
+            cursor.execute(query.format(airline, startTime, endTime))
+            data = cursor.fetchall()
+            cursor.close()
+
+            # rows_dict = {}
+            # startDate = datetime.strptime(startTime, '%Y-%m-%d')
+            # endDate = datetime.strptime(endTime, '%Y-%m-%d')
+            # year = startDate.year
+            # month = startDate.month
+            # while year <= endDate.year:
+            #     if year == endDate.year and month == endDate.month+1:
+            #         break
+            #     if month <= 12:
+            #         rows_dict[str(year)+"/"+str(month)] = 0
+            #         month += 1
+            #     else:
+            #         year += 1
+            #         month = 1
+
+            staffTicketReportData = []
+            ticket_num = 0
+            for i in data:
+                monthlyDataDict = dict()
+                monthlyDataDict["time"] = str(i[1])+"/"+str(i[2])
+                monthlyDataDict["num_tickets"] = i[0]
+                ticket_num += i[0]
+                staffTicketReportData.append(monthlyDataDict)
+
+            with open("static/data/staffTicketReport.json", "w") as outputFile: 
+                json.dump(staffTicketReportData, outputFile) 
+
+            return render_template('staffTicketReport.html', username=username, airline=airline, posts=staffTicketReportData, ticket_num=ticket_num)
+        
+        else:
+            username = check_injection(session['username'])
+            # airline = session[username][0]
+
+            cursor = conn.cursor()
+            query0 = "SELECT airline_name FROM airlineStaff WHERE username=\'{}\'"
+            cursor.execute(query0.format(username))
+            airline = cursor.fetchone()[0]
+            # airline = airline[0]
+            cursor.close()
+
+            return render_template('staffTicketReport.html', username=username)
     
     else:
         session.clear()
@@ -1642,7 +1665,7 @@ def staffticketReport():
 # of revenue earned from indirect sales (when customer bought tickets using 
 # booking agents) in the last month and last year
 @app.route('/staff/earningsReport')
-def staffEarningReport():
+def staffEarningsReport():
     if session.get('username'):
         username = check_injection(session['username'])
         
