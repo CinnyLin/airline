@@ -26,7 +26,8 @@
 <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 <!-- modern JS -->
-<script src="/js/modernizr-2.6.2.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 </head>
 
 <style>
@@ -45,41 +46,30 @@
         <a href="/staff/home">Home</a> |
 		<a href="/logout">Logout</a>
 	</div>
-
-    <form action="/staff/earningsReport" method="POST">
-        <select name="period">
-            {% if period == "1" %}
-            <option value="1" selected="selected">last quarter</option>
-            {% else %}
-            <option value="1">last month</option>
-            {% endif %}
-
-            {% if period == "12" %}
-            <option value="12" selected="selected">last year</option>
-            {% else %}
-            <option value="12">last year</option>
-            {% endif %}
-
-        </select>
-
-        <button type="submit" class="btn btn-primary">Search</button>
-        {% if ferror %}
-        <p class="text-danger"><strong>Sorry:</strong> {{ferror}}</p>
-        {% endif %}
-    </form>
 	
 	<div class="main">
         {% if posts %}
-            </br>
             <h2>View Revenue Earned for <strong>{{posts[0][1]}}</strong></h2>
-
         {% else %}
             <h2>View Revenue Earned</h2>
         {% endif %}
 
-            <!-- PROBLEM: DRAW CHART WITH D3 @zoexiao0516 -->
+        <script type="text/javascript">
+            const mdirect = {{mdirect|tojson}};
+            const mindirect = {{mindirect|tojson}};
+            const ydirect = {{ydirect|tojson}};
+            const yindirect = {{yindirect|tojson}};
+        </script>
+
+        <h3 style="text-align: center;">Comparison of Revenue Earned</h3>
         
-        </div>
+        <div id="revenue_chart" style="height: 400px; width: 700px; margin: auto;"></div>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenuePie.js'}}"></script>
+
+        <div id="revenue_chart2" style="height: 400px; width: 700px; margin: auto;"></div>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenuePie2.js'}}"></script>
+        
+        
 	</div>
 
 </body>

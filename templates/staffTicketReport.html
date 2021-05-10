@@ -26,7 +26,8 @@
 <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 <!-- modern JS -->
-<script src="https://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 </head>
 
 <body>
@@ -40,11 +41,8 @@
 		<h3>Hi, {{username}}!</h3>
         
 		{% if posts %}
-            </br>
-            <h2><strong>{{airline}}</strong>'s Tickets Report</h2>
-			<!-- <h2><strong>{{posts[0][1]}}</strong>'s Tickets Report</h2> -->
-            <h3 style="text-align: center;">Amounts of Ticket Sold: {{ticket_num}}</h3>
-    
+			<h2><strong>{{posts[0][1]}}</strong>'s Tickets Report</h2>
+            <h3 style="text-align: center;">Amounts of Ticket Sold: {{num_ticket_total}}</h3>
         {% else %}
             <h2>Tickets Report</h2>
             <h3 style="text-align: center;">Amounts of Ticket Sold</h3>
@@ -53,209 +51,85 @@
         <div style="text-align: center;">
             <!-- <h3>Amounts of Ticket Sold</h3> -->
         	</br>
-            <form action="/staff/ticketReport" method="POST">
+            <form action="/staffticket" method="POST">
                 <label>Start date:</label>
-                <input type="date" name = "start_time" placeholder="start_time"/> </br>
-                <!-- onfocus="(this.type='date')"  onblur="(this.type='text')" required -->
-                
+                <input type="date" name = "start" placeholder="start" onfocus="(this.type='date')"  onblur="(this.type='text')" required/> </br>
                 <label>End date:</label>
-                <input type="date" name = "end_time" placeholder="end_time"/> </br>
-                <!-- onfocus="(this.type='date')"  onblur="(this.type='text')" required -->
-                
+                <input type="date" name = "end" placeholder="end" onfocus="(this.type='date')"  onblur="(this.type='text')" required/> </br>
                 <button type="submit" class="btn btn-primary">Search</button>
                 {% if error %}
-                
                 <p class="text-danger"><strong>Sorry:</strong> {{error}}</p>
                 {% endif %}
                 </br></br>
             </form>
 
-            <!-- <h5>OR</h5> -->
+            <h5>OR</h5>
 
-            <form action="/staff/ticketReport" method="POST">
-                <!-- <select name="period">
-                    {% if period == "3" %}
-					<option value="3" selected="selected">last quarter</option>
-					{% else %}
-					<option value="3">last quarter</option>
-					{% endif %}
-					
-					{% if period == "6" %}
-					<option value="6" selected="selected">last half-year</option>
-					{% else %}
-					<option value="6">last half-year</option>
-					{% endif %}
-
-					{% if period == "12" %}
-					<option value="12" selected="selected">last year</option>
-					{% else %}
-					<option value="12">last year</option>
-					{% endif %}
-
-                </select> -->
-
-                <!-- <button type="submit" class="btn btn-primary">Search</button> -->
+            <form action="/stafffixticket" method="POST">
+                <select name="duration" required>
+                    <option value="">--select time range--</option>
+                    <option value="tmonth">last month</option>
+                    <option value="tyear">last year</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Search</button>
                 {% if ferror %}
                 <p class="text-danger"><strong>Sorry:</strong> {{ferror}}</p>
                 {% endif %}
-            </form>
+          	</form>
+		</div>
 
-            <div class="staffTicketReportMonthly">
-        
-            {% if posts %}
-                </br>
-                
-                <p style="text-align: center;">{{posts}}</p>
+		{% if fticket %}
+		<table class="table table-bordered table-sm">
+			<thead>
+				<th>time range</th>
+				<th>amount of tickets sold</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{fs}} to {{fe}}</td>
+					<td>{{ft}}</td>
+				</tr>
+			</tbody>
+		</table>
 
-                <div class=staffTicketReportBarChart>
-                <style>
-					.bar{
-						fill: #0598aa;
-					}
-					.bar:hover{
-						fill: steelblue;
-						/* content: attr(spending); */
-					}
-					.axis {
-						font: 10px sans-serif;
-					}
-					.axis path,
-					.axis line {
-						fill: none;
-						stroke: #000;
-						shape-rendering: crispEdges;
-					}
-				</style>
-            
-				<script action="/staff/ticketReport" method="GET">
-					// set the dimensions of the canvas
-					var margin = {top: 20, right: 100, bottom: 70, left: 100},
-						width = 600 - margin.left - margin.right,
-						height = 300 - margin.top - margin.bottom;
+		<div style="text-align: center;">
+			<h3>Amounts of Ticket Sold</h3>
+			<div id="ticket_graph" style="width: 800px; height: 300px; margin: auto;"></div>
+			<script type="text/javascript">
+				const new_time = {{ftime|tojson}};
+				const new_monthticket = {{fmonthticket|tojson}};
+			</script>
+			<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffTicketBar.js'}}"></script>
+		</div>    
 
-					// set the ranges
-					var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
-					var y = d3.scale.linear().range([height, 0]);
+		{% endif %}
 
-					// define the axis
-					var xAxis = d3.svg.axis()
-						.scale(x)
-						.orient("bottom")
-					var yAxis = d3.svg.axis()
-						.scale(y)
-						.orient("left")
-						.ticks(10);
+		{% if ticket %}
+		</br>
+		<table class="table table-bordered table-sm">
+			<thead>
+				<th>time range</th>
+				<th>amount of tickets sold</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{s}} to {{e}}</td>
+					<td>{{t}}</td>
+				</tr>
+			</tbody>
+		</table>
 
-					// add the SVG element
-					var svg = d3.select("body").append("svg")
-						.attr("width", width + margin.left + margin.right)
-						.attr("height", height + margin.top + margin.bottom)
-					.append("g")
-						.attr("transform", 
-							"translate(" + margin.left + "," + margin.top + ")");
-					
-					// load the data
-					d3.json("{{url_for('static', filename='data/')}}{{'staffTicketReport.json'}}",
-							//.post(JSON.stringify(customerSpending.json)),
-							function(error, data) {
+		<div style="text-align: center;">
+			<h3>Amounts of Ticket Sold</h3>
+			<div id="ticket_graph" style="width: 800px; height: 300px; margin: auto;"></div>
+			<script type="text/javascript">
+				const new_time = {{time|tojson}};
+				const new_monthticket = {{monthticket|tojson}};
+			</script>
+			<script type="text/javascript" src="{{ url_for('static', filename='staffTicketBar.js') }}"></script>
+		</div>
+	{% endif %}
 
-						data.forEach(function(d) {
-							d.time = d.time;
-							d.num_tickets = +d.num_tickets;
-						});
-						
-					// scale the range of the data
-					x.domain(data.map(function(d) { return d.time; }));
-					y.domain([0, d3.max(data, function(d) { return d.num_tickets; })]);
-
-					// add axis
-					svg.append("g")
-						.attr("class", "x axis")
-						.attr("transform", "translate(0," + height + ")")
-						.call(xAxis)
-						.selectAll("text")
-						.style("text-anchor", "end")
-						.attr("dx", "-.8em")
-						.attr("dy", "-.55em")
-						.attr("transform", "rotate(-60)" );
-
-					svg.append("g")
-						.attr("class", "y axis")
-						.call(yAxis)
-						.append("text")
-						.attr("transform", "rotate(-90)")
-						.attr("y", 5)
-						.attr("dy", ".71em")
-						.style("text-anchor", "end")
-						.text("# Ticket");
-
-
-					// Add bar chart
-					svg.selectAll("bar")
-						.data(data)
-						.enter().append("rect")
-						.attr("class", "bar")
-						.attr("x", function(d) { return x(d.time); })
-						.attr("width", x.rangeBand())
-						.attr("y", function(d) { return y(d.num_tickets); })
-						.attr("height", function(d) { return height - y(d.num_tickets); });
-
-					});
-                
-				</script>
-                
-                </div>
-
-            {% else %}
-                <p style="text-align: center;">Select a time range to see report</p>
-                
-            {% endif %}
-
-		
-			</div>
-
-
-            {% if fticket %}
-                </br>
-                <table class="table table-bordered table-sm">
-                    <thead>
-                        <th>time range</th>
-                        <th>amount of tickets sold</th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{fs}} to {{fe}}</td>
-                            <td>{{ft}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-            <div style="text-align: center;">
-                <h3>Amounts of Ticket Sold</h3>
-				<!-- chart -->
-			</div>
-            {% endif %}
-			
-		<!-- </br>
-
-            {% if ticket %}
-			<table class="table table-bordered table-sm">
-				<thead>
-					<th>time range</th>
-					<th>amount of tickets sold</th>
-				</thead>
-				<tbody>
-					<tr>
-						<td>{{s}} to {{e}}</td>
-						<td>{{t}}</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<div style="text-align: center;">
-				<h3>Amounts of Ticket Sold</h3>
-			</div>    
-            {% endif %} -->
     </div>
     
 </body>

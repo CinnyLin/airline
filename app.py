@@ -1,22 +1,19 @@
-### REQUIREMENTS ### (delete when complete)
-# GRAPH PROBLEM: does not GET /static/data/data.json again when submitting
-# READ THIS: https://towardsdatascience.com/combining-python-and-d3-js-to-create-dynamic-visualization-applications-73c87a494396
-# 4. Customer: Track My Spending (PROBLEM)
-# 9. Agent: View Top Customers (PROBLEM)
-# 17. Staff: View Ticket Reports 
-# 18. Staff: View Earnings/Revenue Reports
-
 ### ADDITIONAL FEATURES ###
 # 6. login, register should be one page with three views (not three separate pages)
 # 10. after search results come out the search field keeps search input (UI)
 # 11. where you have been: map for customers tickets bought and staff destinations
+# 12. fix seat to num_tickets check when airline staff add data
+# 13. FRONT-END
+# 14. other additional back-end requirements?
+# 15. mention how we deal with identity resolution by separate routing for users
+# 16. mention SQL injection check
+# 17. problem with coloring google charts
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
 import mysql.connector
 import hashlib
 from datetime import datetime, date
-#from collections import defaultdict
 import json
 
 
@@ -31,8 +28,8 @@ app = Flask(__name__,
 # for Zoe: need password, database name is "air"
 conn = mysql.connector.connect(host='localhost',
                                user='root',
-                               password='password',  # comment out this line if not needed
-                               database='sys',
+                               #password='password',  # comment out this line if not needed
+                               database='airline',
                                port=3306)
 
 
@@ -726,7 +723,7 @@ def customerPurchaseTicket():
 # Customer will also have option to specify a range of dates to view total amount of money 
 # spent within that range and a bar chart showing month-wise money spent within that range.
 @app.route('/customer/spending', methods=['POST', 'GET'])
-def trackSpending():
+def customerTrackSpending():
     if session.get('email'):
         email = check_injection(session['email'])
         
@@ -774,48 +771,32 @@ def trackSpending():
         cursor.execute(query2.format(email, past_date))
         monthly_spending_data = cursor.fetchall()
         cursor.close()
-        
-        customerSpendingData = []
-        for i in range(1, int(period)+1):
-            monthlyDataDict = dict()
-            month = (past_date.month + i) % 12
+
+        months = []
+        monthly_spendings = []
+        for i in range(int(period)):
+            month = (past_date.month + i + 1) % 12
             if month == 0:
                 month = 12
-            year = past_date.year + ((past_date.month + i - 1) // 12)
-            monthlyDataDict["time"] = f'{year}/{month}'
-            monthlyDataDict["spending"] = 0
-
-            for spendingData in monthly_spending_data:
-                if (spendingData[0]==year) and (spendingData[1]==month):
-                    monthlyDataDict["spending"] = int(spendingData[2])
-            customerSpendingData.append(monthlyDataDict)
-        
-        # # dump data to json
-        # customerSpendingData = json.dumps(customerSpendingData)
-        # # save to dataStore
-        # data.customerSpendingData = json.loads(customerSpendingData)
-        # # save to temporary variable
-        # customerSpendingData=data.customerSpendingData
-
-        with open("static/data/customerSpending.json", "w") as outputFile: 
-            json.dump(customerSpendingData, outputFile)
+            year = past_date.year + ((past_date.month + i) // 12)
+            flag = False
+            for one_month in monthly_spending_data:
+                if one_month[0] == year and one_month[1] == month:
+                    flag = True
+                    break
+            if flag:
+                monthly_spendings.append(int(one_month[2]))
+            else:
+                monthly_spendings.append(0)
+            months.append(str(year)+'/'+str(month))
 
         return render_template('customerSpending.html', email=email, username=username,
             total_spending_data=total_spending_data[0], duration=duration, period=period,
-            customerSpendingData=customerSpendingData)
+            months=months, monthly_spendings=monthly_spendings)
     
     else:
         session.clear()
         return render_template('404.html')
-
-# class dataStore():
-#      customerSpendingData= None
-# data=dataStore()
-
-# @app.route("/get-data", methods=["GET", "POST"])
-# def returnSpendingData():
-#     f = data.customerSpendingData
-#     return jsonify(f)
 
 # ------- Booking Agent Exclusive Functions --------
 # 0. Booking Agent Homepage
@@ -1057,26 +1038,17 @@ def agentTopCustomers():
         cursor.execute(query.format(email))
         ticket_data = cursor.fetchall()
         cursor.close()
-        
-        topTicketsData = []
-        ticket_length = len(ticket_data)
-        if ticket_length >= 5:
-            for i in range(5):
-                ticketDataDict = dict()
-                ticketDataDict["customer"]=ticket_data[i][0]
-                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
-                topTicketsData.append(ticketDataDict)
+
+        l = len(ticket_data)
+        if l >= 5:
+            ppl1 = [ticket_data[i][0] for i in range(5)]
+            tickets = [int(ticket_data[i][1]) for i in range(5)]
         else:
-            for i in range(ticket_length):
-                ticketDataDict = dict()
-                ticketDataDict["customer"]=ticket_data[i][0]
-                ticketDataDict["num_tickets"]=int(ticket_data[i][1])
-                topTicketsData.append(ticketDataDict)
-            for _ in range(5 - ticket_length):
-                ticketDataDict = dict()
-                ticketDataDict["customer"]=' '
-                ticketDataDict["num_tickets"]=0
-                topTicketsData.append(ticketDataDict)
+            ppl1 = [ticket_data[i][0] for i in range(l)]
+            tickets = [int(ticket_data[i][1]) for i in range(l)]
+            for _ in range(5 - l):
+                ppl1.append(' ')
+                tickets.append(0)
 		
         # (2) by amount of commission (last year)
         cursor = conn.cursor()
@@ -1090,35 +1062,21 @@ def agentTopCustomers():
         cursor.execute(query2.format(email))
         commission_data = cursor.fetchall()
         cursor.close()
-        
-        topCommissionData = []
-        commission_length = len(commission_data)
-        if commission_length >= 5:
-            for i in range(5):
-                commissionDataDict = dict()
-                commissionDataDict["customer"]=commission_data[i][0]
-                commissionDataDict["commission"]=int(commission_data[i][1])
-                topCommissionData.append(commissionDataDict)
+
+
+        l2 = len(commission_data)
+        if l2 >= 5:
+            ppl2 = [commission_data[i][0] for i in range(5)]
+            commissions = [int(commission_data[i][1]) for i in range(5)]
         else:
-            for i in range(commission_length):
-                commissionDataDict = dict()
-                commissionDataDict["customer"]=commission_data[i][0]
-                commissionDataDict["commission"]=int(commission_data[i][1])
-                topCommissionData.append(commissionDataDict)
-            for _ in range(5 - commission_length):
-                commissionDataDict = dict()
-                commissionDataDict["customer"]=' '
-                commissionDataDict["commission"]=0
-                topCommissionData.append(commissionDataDict)
-        
-        with open("static/data/topTickets.json", "w") as outputFile: 
-            json.dump(topTicketsData, outputFile)
-        
-        with open("static/data/topCommission.json", "w") as outputFile: 
-            json.dump(topCommissionData, outputFile)
+            ppl2 = [commission_data[i][0] for i in range(l2)]
+            commissions = [int(commission_data[i][1]) for i in range(l2)]
+            for _ in range(5 - l):
+                ppl2.append(' ')
+                commissions.append(0)
 
         return render_template('agentTopCustomers.html', email=email, emailName=email.split('@')[0],
-            topTicketsData=topTicketsData, topCommissionData=topCommissionData)
+            ppl1=ppl1, ppl2=ppl2, tickets=tickets, commissions=commissions)
     
     else:
         session.clear()
@@ -1584,80 +1542,70 @@ def staffFlightCustomer():
 # Total amounts of ticket sold based on range of dates/last year/last month etc. 
 # Month-wise tickets sold in a bar chart.
 # PROBLEM: not sure how to write this one
-@app.route('/staff/ticketReport', methods=['GET', 'POST'])
-def staffTicketReport():
-    if session.get('username'):
-        if request.method == 'POST':
-            username = check_injection(session['username'])
-        
-            cursor = conn.cursor()
-            query0 = "SELECT airline_name FROM airlineStaff WHERE username=\'{}\'"
-            # print(query0.format(username))
-            cursor.execute(query0.format(username))
-            airline = cursor.fetchone()[0]
-            cursor.close()
+@app.route('/staff/ticketReport')
+def staffTickets():
+	if session.get('username'):
+		username = check_injection(session['username'])
+		cursor = conn.cursor()
+		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+		cursor.execute(query.format(username))
+		data2 = cursor.fetchall()
+		cursor.close()
+		return render_template('staffTicketReport.html', username=username, posts=data2)
+	else:
+		session.clear()
+		return render_template('404.html')
 
-            # (1) show total tickets sold in specified time range
-            startTime = request.form.get('start_time')
-            endTime = request.form.get('end_time')
+@app.route('/stafffixticket', methods=['GET', 'POST'])
+def stafffixticket():
+	if session.get('username'):
+		username = check_injection(session['username'])
+		duration = request.form.get("duration")
+		fallticket = None
+		
+		cursor = conn.cursor()
+		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+		cursor.execute(query.format(username))
+		data2 = cursor.fetchall()
 
-            cursor = conn.cursor()
-            query = """
-                SELECT COUNT(purchase.ticket_id), YEAR(purchase_date), MONTH(purchase_date) \
-                FROM purchase, flight, ticket \
-                WHERE purchase.ticket_id = ticket.ticket_id AND ticket.airline_name = flight.airline_name \
-                    AND ticket.flight_num = flight.flight_num AND flight.airline_name = \'{}\' \
-                    AND date(purchase_date) >= \'{}\' AND date(purchase_date) <= \'{}\' \
-                GROUP BY YEAR(purchase_date), MONTH(purchase_date)"""
-            cursor.execute(query.format(airline, startTime, endTime))
-            data = cursor.fetchall()
-            cursor.close()
+		# if duration == "":
+			# error = "No range selected"
+			# return render_template('staffTickets.html', error = error, username = username)
+		if duration == 'tmonth':
+			ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
+					purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
+					WHERE datediff(CURDATE(), DATE(purchase_date)) < 30 AND username = \'{}\' \
+					GROUP BY year, month\
+					ORDER BY year, month"
+			cursor.execute(ticket.format(username))
+			fallticket = cursor.fetchall()
+		elif duration == 'tyear':
+			ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
+					purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
+					WHERE datediff(CURDATE(), DATE(purchase_date)) < 365 AND username = \'{}\' \
+					GROUP BY year, month\
+						ORDER BY year, month"
 
-            # rows_dict = {}
-            # startDate = datetime.strptime(startTime, '%Y-%m-%d')
-            # endDate = datetime.strptime(endTime, '%Y-%m-%d')
-            # year = startDate.year
-            # month = startDate.month
-            # while year <= endDate.year:
-            #     if year == endDate.year and month == endDate.month+1:
-            #         break
-            #     if month <= 12:
-            #         rows_dict[str(year)+"/"+str(month)] = 0
-            #         month += 1
-            #     else:
-            #         year += 1
-            #         month = 1
+			cursor.execute(ticket.format(username))
+			fallticket = cursor.fetchall()
+		cursor.close()
 
-            staffTicketReportData = []
-            ticket_num = 0
-            for i in data:
-                monthlyDataDict = dict()
-                monthlyDataDict["time"] = str(i[1])+"/"+str(i[2])
-                monthlyDataDict["num_tickets"] = i[0]
-                ticket_num += i[0]
-                staffTicketReportData.append(monthlyDataDict)
 
-            with open("static/data/staffTicketReport.json", "w") as outputFile: 
-                json.dump(staffTicketReportData, outputFile) 
+		if(fallticket):
+			fs = str(fallticket[0][0]) + '-' + str(fallticket[0][1])
+			fe = str(fallticket[len(fallticket) - 1][0]) + '-' + str(fallticket[len(fallticket) - 1][1])
+			ftime = [str(fallticket[i][0]) + '-' + str(fallticket[i][1]) for i in range(len(fallticket))]
+			fmonthticket = [fallticket[i][2] for i in range(len(fallticket))]
+			ftotal = sum(fmonthticket)
 
-            return render_template('staffTicketReport.html', username=username, airline=airline, posts=staffTicketReportData, ticket_num=ticket_num)
-        
-        else:
-            username = check_injection(session['username'])
-            # airline = session[username][0]
+			return render_template('staffTicketReport.html', fs = fs, fe = fe, ft = ftotal, ftime = ftime, fmonthticket = fmonthticket, fticket = fallticket, username = username, posts = data2)
+		else:
+			ferror = "No ticket sold!"
+			return render_template('staffTicketReport.html', ferror = ferror, username = username, posts = data2)
+	else:
+		session.clear()
+		return render_template('404.html')
 
-            cursor = conn.cursor()
-            query0 = "SELECT airline_name FROM airlineStaff WHERE username=\'{}\'"
-            cursor.execute(query0.format(username))
-            airline = cursor.fetchone()[0]
-            # airline = airline[0]
-            cursor.close()
-
-            return render_template('staffTicketReport.html', username=username)
-    
-    else:
-        session.clear()
-        return render_template('404.html')
 
 # 9. Airline Staff Revenue Comparison
 # Draw a pie chart for showing total amount of revenue earned from direct sales 
