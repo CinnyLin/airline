@@ -1,13 +1,8 @@
 ### ADDITIONAL FEATURES ###
-# 6. login, register should be one page with three views (not three separate pages)
-# 10. after search results come out the search field keeps search input (UI)
 # 11. where you have been: map for customers tickets bought and staff destinations
 # 12. fix seat to num_tickets check when airline staff add data
-# 13. FRONT-END
-# 14. other additional back-end requirements?
 # 15. mention how we deal with identity resolution by separate routing for users
 # 16. mention SQL injection check
-# 17. problem with coloring google charts
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
@@ -775,13 +770,13 @@ def customerTrackSpending():
         months = []
         monthly_spendings = []
         for i in range(int(period)):
-            month = (past_date.month + i + 1) % 12
+            month = (past_date.month+i+1)%12
             if month == 0:
                 month = 12
-            year = past_date.year + ((past_date.month + i) // 12)
+            year = past_date.year + ((past_date.month+i)//12)
             flag = False
             for one_month in monthly_spending_data:
-                if one_month[0] == year and one_month[1] == month:
+                if (one_month[0]==year) and (one_month[1]==month):
                     flag = True
                     break
             if flag:
@@ -1556,56 +1551,71 @@ def staffTickets():
 		session.clear()
 		return render_template('404.html')
 
-@app.route('/stafffixticket', methods=['GET', 'POST'])
-def stafffixticket():
-	if session.get('username'):
-		username = check_injection(session['username'])
-		duration = request.form.get("duration")
-		fallticket = None
-		
-		cursor = conn.cursor()
-		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
-		cursor.execute(query.format(username))
-		data2 = cursor.fetchall()
-
-		# if duration == "":
-			# error = "No range selected"
-			# return render_template('staffTickets.html', error = error, username = username)
-		if duration == 'tmonth':
-			ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
-					purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
-					WHERE datediff(CURDATE(), DATE(purchase_date)) < 30 AND username = \'{}\' \
-					GROUP BY year, month\
+@app.route('/staff/ticket', methods=['GET', 'POST'])
+def staffTicket():
+    if session.get('username'):
+        username = check_injection(session['username'])
+        start = request.form['start']
+        end = request.form['end']
+        query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor = conn.cursor()
+        cursor.execute(query.format(username))
+        data2 = cursor.fetchall()
+        
+        ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
+				purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
+				WHERE purchase_date > \'{}\'\
+				and purchase_date < \'{}\' AND username = \'{}\' \
+				GROUP BY year, month\
 					ORDER BY year, month"
-			cursor.execute(ticket.format(username))
-			fallticket = cursor.fetchall()
-		elif duration == 'tyear':
-			ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
-					purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
-					WHERE datediff(CURDATE(), DATE(purchase_date)) < 365 AND username = \'{}\' \
-					GROUP BY year, month\
-						ORDER BY year, month"
+        cursor.execute(ticket.format(start, end, username))
+        allTickets = cursor.fetchall()
+        cursor.close()
+        
+        startYear = allTickets[0][0]
+        startMonth = allTickets[0][1]
+        endYear = allTickets[-1][0]
+        endMonth = allTickets[-1][1]
+        if startYear == endYear:
+            period = endMonth - startMonth + 1
+        else:
+            period = 12*(endYear-startYear-1) + endMonth + (12-startMonth+1)
+        
+        startDate = str(startYear)+'/'+str(startMonth)
+        endDate = str(endYear)+'/'+str(endMonth)
 
-			cursor.execute(ticket.format(username))
-			fallticket = cursor.fetchall()
-		cursor.close()
-
-
-		if(fallticket):
-			fs = str(fallticket[0][0]) + '-' + str(fallticket[0][1])
-			fe = str(fallticket[len(fallticket) - 1][0]) + '-' + str(fallticket[len(fallticket) - 1][1])
-			ftime = [str(fallticket[i][0]) + '-' + str(fallticket[i][1]) for i in range(len(fallticket))]
-			fmonthticket = [fallticket[i][2] for i in range(len(fallticket))]
-			ftotal = sum(fmonthticket)
-
-			return render_template('staffTicketReport.html', fs = fs, fe = fe, ft = ftotal, ftime = ftime, fmonthticket = fmonthticket, fticket = fallticket, username = username, posts = data2)
-		else:
-			ferror = "No ticket sold!"
-			return render_template('staffTicketReport.html', ferror = ferror, username = username, posts = data2)
-	else:
-		session.clear()
-		return render_template('404.html')
-
+        if allTickets:
+            time = []
+            monthTickets = []
+            for i in range(int(period)):
+                month = (startMonth+i+1)%12
+                if month == 0:
+                    month = 12
+                year = startYear + ((startMonth+1)//12)
+                flag = False
+                for one_month in allTickets:
+                    if (one_month[0]==year) and (one_month[1]==month):
+                        flag = True
+                        break
+                if flag:
+                    monthTickets.append(int(one_month[2]))
+                else:
+                    monthTickets.append(0)
+                time.append(str(year)+'/'+str(month))
+            totalTickets = sum(monthTickets)
+        
+            return render_template('staffTicketReport.html', ticket=allTickets, 
+                startDate=startDate, endDate=endDate, time=time, 
+                totalTickets=totalTickets, monthTickets=monthTickets, 
+                username=username, posts=data2)
+        
+        else:
+            error = "No tickets sold."
+            return render_template('staffTicketReport.html', error=error, username=username, posts=data2)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 # 9. Airline Staff Revenue Comparison
 # Draw a pie chart for showing total amount of revenue earned from direct sales 

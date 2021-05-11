@@ -49,9 +49,9 @@
 	
 	<div class="main">
         {% if posts %}
-            <h2>View Revenue Earned for <strong>{{posts[0][1]}}</strong></h2>
+            <h2>Revenue Earned for <strong>{{posts[0][1]}}</strong></h2>
         {% else %}
-            <h2>View Revenue Earned</h2>
+            <h2>Revenue Earned</h2>
         {% endif %}
 
         <script type="text/javascript">
@@ -63,11 +63,11 @@
 
         <h3 style="text-align: center;">Comparison of Revenue Earned</h3>
         
-        <div id="revenue_chart" style="height: 400px; width: 700px; margin: auto;"></div>
-        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenuePie.js'}}"></script>
+        <div id="revenueMonth" style="height: 400px; width: 650px; float:right;"></div>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenueMonth.js'}}"></script>
 
-        <div id="revenue_chart2" style="height: 400px; width: 700px; margin: auto;"></div>
-        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenuePie2.js'}}"></script>
+        <div id="revenueYear" style="height: 400px; width: 650px;"></div>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffRevenueYear.js'}}"></script>
         
         
 	</div>

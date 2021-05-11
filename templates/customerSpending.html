@@ -49,7 +49,6 @@
 	
 	<div class="main">
 		<h3>Hi, {{username}}!</h3>
-        <!-- <h2>Track Your Spending</h2> -->
         
 		<div style="text-align: center;">
             <h2>
@@ -153,8 +152,8 @@
 				const months = {{months|tojson}};
 				const monthly_spendings = {{monthly_spendings|tojson}};
 			</script>
-			<div id="cusMonthlySpending" style="height: 400px; width: 700px; margin: auto;"></div>
-			<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'customerMonthlySpending.js'}}"></script>
+			<div id="customerSpending" style="height: 300px; width: 900px; margin: auto;"></div>
+			<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'customerSpending.js'}}"></script>
 
 			</div>
 
