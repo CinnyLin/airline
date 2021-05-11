@@ -1,9 +1,9 @@
 google.charts.load("current", { packages: ["bar"] });
-google.charts.setOnLoadCallback(drawBarChart2);
+google.charts.setOnLoadCallback(drawBarChart);
 
-function drawBarChart2() {
+function drawBarChart() {
   const arrayLength = monthly_spendings.length;
-  let content = [["commission", "amount of commission"]];
+  let content = [["month", "monthly spending"]];
   for (var i = 0; i < arrayLength; i++) {
     content.push([months[i], monthly_spendings[i]]);
   }
@@ -14,20 +14,17 @@ function drawBarChart2() {
 
   var options = {
     legend: { position: "none" },
-    chart: {
-      title: "Monthly Spendings",
-    },
+    bar: { groupWidth: "50%" },
     axes: {
       x: {
-        0: { side: "bottom", label: "monthly spending" },
+        0: { side: "bottom", label: "" },
       },
     },
-    bar: { groupWidth: "50%" },
   };
 
+  options.colors = ["#0598aa"];
   var chart = new google.charts.Bar(
-    document.getElementById("cusMonthlySpending")
+    document.getElementById("customerSpending")
   );
-  // Convert the Classic options to Material options.
   chart.draw(data, google.charts.Bar.convertOptions(options));
 }

@@ -49,6 +49,7 @@
 	
 	<div class="main">
 		<h3>Hi, {{emailName}}!</h3>
+		<h2 style="text-align: center;">Top 5 Customers</h2>
 
 		<script type="text/javascript">
 			// store the variables in js first
@@ -58,15 +59,15 @@
 			const commissions = {{commissions|tojson}};
 		</script>
 
-        <h2 style="text-align: center;">Top Customers by Number of Tickets</h2>
-		<div id="left" style="height: 300px; width: 700px; margin: auto;"></div>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'agentTopCustomer.js'}}"></script>
+        <!-- <h2 style="text-align: center;">Top Customers by Number of Tickets</h2> -->
+		<div id="topTickets" style="height: 300px; width: 700px; margin: auto;"></div>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'agentTopCustomerTicket.js'}}"></script>
 
 		<hr>
 
-		<h2 style="text-align: center;">Top Customers by Amount of Commission</h2>
-		<div id="right" style="height: 300px; width: 700px; margin: auto;"></div>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'agentTopCustomer2.js'}}"></script>
+		<!-- <h2 style="text-align: center;">Top Customers by Amount of Commission</h2> -->
+		<div id="topCommission" style="height: 300px; width: 700px; margin: auto;"></div>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'agentTopCustomerCommission.js'}}"></script>
 	</div>
     
 </body>

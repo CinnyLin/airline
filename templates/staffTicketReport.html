@@ -38,97 +38,46 @@
 	</div>
 	
 	<div class="main">
-		<h3>Hi, {{username}}!</h3>
+		<!-- <h3>Hi, {{username}}!</h3> -->
         
 		{% if posts %}
 			<h2><strong>{{posts[0][1]}}</strong>'s Tickets Report</h2>
-            <h3 style="text-align: center;">Amounts of Ticket Sold: {{num_ticket_total}}</h3>
-        {% else %}
+		{% else %}
             <h2>Tickets Report</h2>
-            <h3 style="text-align: center;">Amounts of Ticket Sold</h3>
+		{% endif %}
+		{% if ticket %}
+            <h2 style="text-align: center;">Total # Ticket Sold: <strong>{{totalTickets}}</strong></h2>
+			<h4 style="text-align: center;"> between {{startDate}} and {{endDate}}</h4>
+        {% else %}
+            <h2 style="text-align: center;">Total # Ticket Sold</h2>
         {% endif %}
+
         
-        <div style="text-align: center;">
-            <!-- <h3>Amounts of Ticket Sold</h3> -->
-        	</br>
-            <form action="/staffticket" method="POST">
-                <label>Start date:</label>
-                <input type="date" name = "start" placeholder="start" onfocus="(this.type='date')"  onblur="(this.type='text')" required/> </br>
-                <label>End date:</label>
-                <input type="date" name = "end" placeholder="end" onfocus="(this.type='date')"  onblur="(this.type='text')" required/> </br>
+        <div style="text-align: center; height: 100px; width: 800px; margin: auto;">
+			<form action="/staff/ticket" method="POST">
+                <label>Start:</label>
+                <input type="date" name = "start" placeholder="start" onfocus="(this.type='date')"  onblur="(this.type='text')" required/>
+                <label>End:</label>
+                <input type="date" name = "end" placeholder="end" onfocus="(this.type='date')"  onblur="(this.type='text')" required/>
                 <button type="submit" class="btn btn-primary">Search</button>
                 {% if error %}
                 <p class="text-danger"><strong>Sorry:</strong> {{error}}</p>
                 {% endif %}
                 </br></br>
             </form>
-
-            <h5>OR</h5>
-
-            <form action="/stafffixticket" method="POST">
-                <select name="duration" required>
-                    <option value="">--select time range--</option>
-                    <option value="tmonth">last month</option>
-                    <option value="tyear">last year</option>
-                </select>
-                <button type="submit" class="btn btn-primary">Search</button>
-                {% if ferror %}
-                <p class="text-danger"><strong>Sorry:</strong> {{ferror}}</p>
-                {% endif %}
-          	</form>
 		</div>
-
-		{% if fticket %}
-		<table class="table table-bordered table-sm">
-			<thead>
-				<th>time range</th>
-				<th>amount of tickets sold</th>
-			</thead>
-			<tbody>
-				<tr>
-					<td>{{fs}} to {{fe}}</td>
-					<td>{{ft}}</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<div style="text-align: center;">
-			<h3>Amounts of Ticket Sold</h3>
-			<div id="ticket_graph" style="width: 800px; height: 300px; margin: auto;"></div>
-			<script type="text/javascript">
-				const new_time = {{ftime|tojson}};
-				const new_monthticket = {{fmonthticket|tojson}};
-			</script>
-			<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffTicketBar.js'}}"></script>
-		</div>    
-
-		{% endif %}
 
 		{% if ticket %}
-		</br>
-		<table class="table table-bordered table-sm">
-			<thead>
-				<th>time range</th>
-				<th>amount of tickets sold</th>
-			</thead>
-			<tbody>
-				<tr>
-					<td>{{s}} to {{e}}</td>
-					<td>{{t}}</td>
-				</tr>
-			</tbody>
-		</table>
-
 		<div style="text-align: center;">
-			<h3>Amounts of Ticket Sold</h3>
-			<div id="ticket_graph" style="width: 800px; height: 300px; margin: auto;"></div>
+			<!-- <h3>Montly Tickets Sold</h3> -->
+			<div id="staffTicket" style="width: 800px; height: 300px; margin: auto;"></div>
 			<script type="text/javascript">
 				const new_time = {{time|tojson}};
-				const new_monthticket = {{monthticket|tojson}};
+				const new_monthticket = {{monthTickets|tojson}};
 			</script>
-			<script type="text/javascript" src="{{ url_for('static', filename='staffTicketBar.js') }}"></script>
+			<script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffTicketBar.js'}}"></script>
 		</div>
-	{% endif %}
+		{% endif %}
 
     </div>
     
