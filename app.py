@@ -1,8 +1,13 @@
-### ADDITIONAL FEATURES ###
+### ADDITIONAL FEATURES TO WORK ON ###
 # 11. where you have been: map for customers tickets bought and staff destinations
-# 12. fix seat to num_tickets check when airline staff add data
-# 15. mention how we deal with identity resolution by separate routing for users
-# 16. mention SQL injection check
+# check injection mention in UI
+
+### ADDITIONAL FEATURES WE DID ###
+# 1. delete account and reset password
+# 2. identity resolution by separate routing for users
+# 3. SQL injection check
+# 4. check seat to num_tickets matches when airline staff add data
+
 
 # Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
@@ -43,10 +48,6 @@ def check_injection(string_input):
 		if char != "'":
 			sql_input += char
 	return sql_input
-
-
-# --------- More preventive actions --------
-# --------- More preventive actions --------
 
 
 # --------- Public Information: Search Flights  --------
@@ -1221,12 +1222,12 @@ def addFlight():
             cursor.execute(query.format(username))
             data1 = cursor.fetchall()
             return render_template('staffEditFlightData.html', error1=error1, username=username, airplane=data1, posts=data2)
-        
+
         num = "SELECT seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\' and airplane_id = \'{}\'"
         cursor.execute(num.format(username, airplane_id))
         num = cursor.fetchone()
-        if int(seats) > int(num[0]):
-            num_error = "There is not enough seats."
+        if int(seats) != int(num[0]):
+            num_error = "The number of seats does not match the airplane seats."
             query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
             cursor.execute(query.format(username))
             data1 = cursor.fetchall()
@@ -1538,7 +1539,7 @@ def staffFlightCustomer():
 # Month-wise tickets sold in a bar chart.
 # PROBLEM: not sure how to write this one
 @app.route('/staff/ticketReport')
-def staffTickets():
+def staffTicketReport():
 	if session.get('username'):
 		username = check_injection(session['username'])
 		cursor = conn.cursor()
@@ -1698,15 +1699,15 @@ def staffEarningsReport():
 # Find the top 3 most popular destinations for last 3 months and last year.
 @app.route('/staff/topDestinations')
 def staffTopDestinations():
-	if session.get('username'):
-		username = check_injection(session['username'])
-
-		cursor = conn.cursor()
-		query = "SELECT username, airline_name FROM airlineStaff WHERE username = \'{}\'"
-		cursor.execute(query.format(username))
-		data1 = cursor.fetchall()
-
-		query1 = """
+    if session.get('username'):
+        username = check_injection(session['username'])
+        
+        cursor = conn.cursor()
+        query = "SELECT airline_name FROM airlineStaff WHERE username = \'{}\'"
+        cursor.execute(query.format(username))
+        airline = str(cursor.fetchone())[2:-3]
+        
+        query1 = """
             SELECT airport_city, count(ticket_id) AS ticket \
             FROM purchase NATURAL JOIN ticket NATURAL JOIN flight, airport \
             WHERE airport_name = arrival_airport AND \
@@ -1715,10 +1716,13 @@ def staffTopDestinations():
             ORDER BY ticket DESC \
             LIMIT 3
             """
-		cursor.execute(query1)
-		month = cursor.fetchall()
+        cursor.execute(query1)
+        monthData = cursor.fetchall()
+        for column in monthData:
+            monthDest = column[0]
+            monthTickets = column[1]
 
-		query2 = """
+        query2 = """
             SELECT airport_city, COUNT(ticket_id) AS ticket \
             FROM purchase NATURAL JOIN ticket NATURAL JOIN flight, airport \
             WHERE airport_name = arrival_airport \
@@ -1727,14 +1731,21 @@ def staffTopDestinations():
             ORDER BY ticket DESC \
             LIMIT 3
             """
-		cursor.execute(query2)
-		year = cursor.fetchall()
-		cursor.close()
-		return render_template('staffTopDestination.html', month = month, year = year, username = username, posts = data1)
-
-	else:
-		session.clear()
-		return render_template('404.html')
+        cursor.execute(query2)
+        yearData = cursor.fetchall()
+        for column in yearData:
+            yearDest = column[0]
+            yearTickets = column[1]
+        cursor.close()
+		
+        return render_template('staffTopDestination.html', 
+            monthData=monthData, monthDest=monthDest, monthTickets=monthTickets,
+            yearData=yearData, yearDest=yearDest, yearTickets=yearTickets,
+            username=username, airline=airline)
+    
+    else:
+        session.clear()
+        return render_template('404.html')
 
 
 # ------- Run app ----------

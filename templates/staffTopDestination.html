@@ -26,7 +26,8 @@
 <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 <!-- modern JS -->
-<script src="/js/modernizr-2.6.2.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 </head>
 
 <style>
@@ -47,7 +48,7 @@
 	</div>
 	
 	<div class="main">
-        <h2>View Top Destination</h2>
+        <h2>View <strong>{{airline}}</strong>'s Top Destinations</h2>
         <style>
             table, td, th {
                 text-align: center;
@@ -58,26 +59,43 @@
             <table class="table table-bordered table-sm">
                 <th>city</th>
                 <th># tickets</th>
-            {% for line in month %}		
+            {% for line in monthData %}		
                 <tr>
                     <td>{{line[0]}}</td>
                     <td>{{line[1]}}</td>
                 </tr>
             {% endfor %}
             </table>
+
+            <!-- <div style="text-align: center;">
+                <div id="topDestinationsMonth" style="width: 800px; height: 300px; margin: auto;"></div>
+                <script type="text/javascript">
+                    const new_dest = {{monthDest|tojson}};
+                    const new_tickets = {{monthTickets|tojson}};
+                </script>
+                <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffTopDestinationsMonth.js'}}"></script>
+            </div> -->
 
             <h3 style="text-align: center;">Top 3 Most Popular Destination Last Year</h3>
             <table class="table table-bordered table-sm">
                 <th>city</th>
                 <th># ticket</th>
-
-            {% for line in year %}		
+            {% for line in yearData %}		
                 <tr>
                     <td>{{line[0]}}</td>
                     <td>{{line[1]}}</td>
                 </tr>
             {% endfor %}
             </table>
+
+            <!-- <div style="text-align: center;">
+                <div id="topDestinationsYear" style="width: 800px; height: 300px; margin: auto;"></div>
+                <script type="text/javascript">
+                    const new_dest2 = {{yearDest|tojson}};
+                    const new_tickets2 = {{yearTickets|tojson}};
+                </script>
+                <script type="text/javascript" src="{{ url_for('static', filename='js/')}}{{'staffTopDestinationsYear.js'}}"></script>
+            </div> -->
         
         </div>
 	</div>
