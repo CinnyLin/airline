@@ -1,6 +1,5 @@
 ### ADDITIONAL FEATURES TO WORK ON ###
 # 11. where you have been: map for customers tickets bought and staff destinations
-# check injection mention in UI
 
 ### ADDITIONAL FEATURES WE DID ###
 # 1. delete account and reset password
@@ -40,15 +39,14 @@ def index():
 
 # --------- Prevent SQL injection --------
 def check_injection(string_input):
-	assert type(string_input) == str
-	if "'" not in string_input:
-		return string_input
-	sql_input = ""
-	for char in string_input:
-		if char != "'":
-			sql_input += char
-	return sql_input
-
+    assert type(string_input) == str
+    if "'" not in string_input:
+        return string_input
+    sql_input = ""
+    for char in string_input:
+        if char != "'":
+            sql_input += char
+    return sql_input
 
 # --------- Public Information: Search Flights  --------
 # All users, whether logged in or not, can view this page
@@ -168,7 +166,7 @@ def registerCustomerAuth():
     passport_expiration = check_injection(request.form['passport_expiration'])
     passport_country = check_injection(request.form['passport_country'])
     date_of_birth = check_injection(request.form['date_of_birth'])
-    
+
     if not len(password) >= 4:
         flash("Password length must be at least 4 characters. Please enter another password.")
         return redirect(request.url)
