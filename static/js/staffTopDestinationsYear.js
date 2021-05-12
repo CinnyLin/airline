@@ -1,6 +1,7 @@
 google.charts.load('current', {'packages': ['geochart'],
-'mapsApiKey': ''});
-google.charts.setOnLoadCallback(drawMarkersMap);
+'mapsApiKey': 'AIzaSyDMBKsxrynlg8azM7OH5RGkTU6YLI83S38'});
+//google.charts.setOnLoadCallback(drawMarkersMap);
+google.charts.setOnLoadCallback(drawRegionsMap);
 
 const dest0 = new_dest2;
 const tickets0 = new_tickets2;
@@ -14,15 +15,17 @@ function drawMarkersMap() {
         temp.push(dest0[i]);
         temp.push(tickets0[i]);
         d.push(temp)
+
+    var data = google.visualization.arrayToDataTable(d);
+
+    var options = {
+    displayMode: 'markers',
+    colorAxis: {colors: ['#0598aa']}
     }
 
-var data = google.visualization.arrayToDataTable(d);
+    var chart = new google.visualization.GeoChart(document.getElementById('topDestinationsYear'));
+    chart.draw(data, options);
+    }
 
-var options = {
-displayMode: 'markers',
-colorAxis: {colors: ['#0598aa']}
-};
 
-var chart = new google.visualization.GeoChart(document.getElementById('topDestinationsYear'));
-chart.draw(data, options);
 };

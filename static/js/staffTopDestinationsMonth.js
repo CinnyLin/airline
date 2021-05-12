@@ -1,5 +1,5 @@
 google.charts.load('current', {'packages': ['geochart'],
-'mapsApiKey': ''});
+'mapsApiKey': 'AIzaSyDMBKsxrynlg8azM7OH5RGkTU6YLI83S38'});
 google.charts.setOnLoadCallback(drawMarkersMap);
 
 const dest0 = new_dest;
