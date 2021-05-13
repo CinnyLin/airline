@@ -3,10 +3,10 @@ A list of the files in the application and what is in each file.
 
 ## Back-End
 ### `app.py` file
-Read about all the back-end logic functions [here](https://github.com/CinnyLin/airline/READMEfunctions.md)
+Read about all the back-end logic functions [here](https://github.com/CinnyLin/airline/blob/main/READMEfunctions.md)
 
 ### `sql` folder
-Read about the database structure [here](https://github.com/CinnyLin/airline/READMEsql.md)
+Read about the database structure [here](https://github.com/CinnyLin/airline/blob/main/READMEsql.md)
 
 
 ## Front-End
