@@ -3,9 +3,10 @@
 
 ### ADDITIONAL FEATURES WE DID ###
 # 1. delete account and reset password
-# 2. identity resolution by separate routing for users
+# 2. check session every time and identity resolution by separate routing for users
 # 3. SQL injection check
-# 4. check seat to num_tickets matches when airline staff add data
+# 4. password length check
+# 5. check seat to num_tickets matches when airline staff add data
 
 
 # Import Flask Library
@@ -841,7 +842,7 @@ def agentSearchPurchase():
 
 # 2. Booking Agent Purchase New Ticket
 @app.route('/agent/purchaseTickets', methods=['GET', 'POST'])
-def agentPurchaseTickets():
+def agentPurchaseTicket():
     if session.get('email'):
         email = check_injection(session['email'])
         airline_name = check_injection(request.form.get("airline_name"))
@@ -1224,8 +1225,8 @@ def addFlight():
         num = "SELECT seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\' and airplane_id = \'{}\'"
         cursor.execute(num.format(username, airplane_id))
         num = cursor.fetchone()
-        if int(seats) != int(num[0]):
-            num_error = "The number of seats does not match the airplane seats."
+        if int(seats) >= int(num[0]):
+            num_error = "The number of seats left cannot be more than the airplane seats."
             query = "SELECT airplane_id, seats FROM airplane NATURAL JOIN airlineStaff WHERE username = \'{}\'"
             cursor.execute(query.format(username))
             data1 = cursor.fetchall()
@@ -1535,7 +1536,6 @@ def staffFlightCustomer():
 # 8. Airline Staff View Ticket Reports 
 # Total amounts of ticket sold based on range of dates/last year/last month etc. 
 # Month-wise tickets sold in a bar chart.
-# PROBLEM: not sure how to write this one
 @app.route('/staff/ticketReport')
 def staffTicketReport():
 	if session.get('username'):
