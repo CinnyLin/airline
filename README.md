@@ -6,7 +6,7 @@ A list of the files in the application and what is in each file.
 Read about all the back-end logic functions [here](https://github.com/CinnyLin/airline/blob/main/READMEfunctions.md)
 
 ### `sql` folder
-Read about the database structure [here](https://github.com/CinnyLin/airline/blob/main/READMEsql.md)
+Read about the database structure [here](https://github.com/CinnyLin/airline/blob/main/sql/READMEsql.md)
 
 
 ## Front-End
