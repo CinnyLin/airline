@@ -1,4 +1,4 @@
-# [`sql`](https://github.com/CinnyLin/airline/sql)
+# `sql`
 
 ## `create_tables.sql`
 create basic table structures *
