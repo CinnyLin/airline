@@ -1334,8 +1334,8 @@ def addAirport():
 
 		else:
 			cursor = conn.cursor()
-			ins = "INSERT INTO airport VALUES(\'{}\', \'{}\')"
-			cursor.execute(ins.format(airport_name, airport_city))
+			insert = "INSERT INTO airport VALUES(\'{}\', \'{}\')"
+			cursor.execute(insert.format(airport_name, airport_city))
 			conn.commit()
 			cursor.close()
 			message3 = "New airport successfully added."
@@ -1561,12 +1561,14 @@ def staffTicket():
         cursor.execute(query.format(username))
         data2 = cursor.fetchall()
         
-        ticket = "SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
-				purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
-				WHERE purchase_date > \'{}\'\
-				and purchase_date < \'{}\' AND username = \'{}\' \
-				GROUP BY year, month\
-					ORDER BY year, month"
+        ticket = """
+            SELECT YEAR(purchase_date) AS year, MONTH(purchase_date) AS month, count(ticket_id) FROM \
+            purchase NATURAL JOIN airlineStaff NATURAL JOIN flight NATURAL JOIN ticket\
+            WHERE purchase_date > \'{}\'\
+            and purchase_date < \'{}\' AND username = \'{}\' \
+            GROUP BY year, month\
+            ORDER BY year, month
+            """
         cursor.execute(ticket.format(start, end, username))
         allTickets = cursor.fetchall()
         cursor.close()
