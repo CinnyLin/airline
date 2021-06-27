@@ -10,11 +10,10 @@
 
 
 # Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect, flash, jsonify
+from flask import Flask, render_template, request, session, redirect, flash
 import mysql.connector
 import hashlib
-from datetime import datetime, date
-import json
+from datetime import date
 
 
 # Initialize the app from Flask (and reference templates!)
